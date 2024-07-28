@@ -15,7 +15,6 @@ import numpy as np
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 
-
 pandas2ri.activate()
 
 ro.r.source('PanglaoDB_proc_R.R')
@@ -31,7 +30,7 @@ def process_PanglaoDB(data_path):
     # processed_data definition
     
     processed_data = anndata.AnnData(X=counts_matrix)
-    processed_data.obs = col_data_df
-    processed_data.var = row_data_df
+    processed_data.obs['cell_ids'] = col_data_df
+    processed_data.var['gene_ids'] = row_data_df
     
     return processed_data
