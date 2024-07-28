@@ -81,6 +81,6 @@ def read_file_from_s3(bucket_name, prefix):
             
             continue
         
-        file_list.append({'key' : file_key, 'data_type' : data_type,'data': processed_data})
+        file_list.append({'study' : study_name, 'sample' : sample_name, 'data_type' : data_type,'data': processed_data})
     
     return file_list
