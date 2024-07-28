@@ -1,12 +1,12 @@
 '''
 
-Process data from the PanglaoDB.
+Process data from the PanglaoDB
 
 Input:
- - data_file: data from the PanglaoDB in RData format.
+ - data_file: data from the PanglaoDB in RData format
 
 Output:
- - processed_data: processed data in seurat object format.
+ - processed_data: processed data in seurat object format
 
 '''
 

@@ -1,12 +1,12 @@
 '''
 
-Process data from the Single Cell Portal.
+Process data from the Single Cell Portal
 
 Input:
- - data_file: data from the Single Cell Portal in h5ad format.
+ - data_file: data from the Single Cell Portal in h5ad format
 
 Output:
- - processed_data: processed data in anndata format.
+ - processed_data: processed data in anndata format
 
 '''
 
