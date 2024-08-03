@@ -3,7 +3,7 @@ from botocore.client import Config
 import pandas as pd
 import io
 
-import models
+from migrations import models
 
 bucket_name = ''
 file_key = ''
