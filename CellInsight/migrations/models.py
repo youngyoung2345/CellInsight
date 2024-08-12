@@ -29,18 +29,6 @@ s3_client = boto3.client(
     config=Config(signature_version='s3v4')
 )
 
-def read_RData(file_data):
-    base = importr('base')
-    
-    with robjects.conversion.localconverter(robjects.default_converter + robjects.numpy2ri.converter):
-        r_object = base.readRDS(io.BytesIO(file_data))
-        return robjects.conversion.rpy2py(r_object)
-
-def read_h5ad(file_data):
-    with io.BytesIO(file_data) as f:
-        data = anndata.read_h5ad(f)
-        return data
-    
 def list_s3_objects(bucket_name, prefix):
     try:
         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
@@ -56,6 +44,18 @@ def get_s3_objects(bucket_name, file_key):
     except:
         return None
 
+def read_RData(file_data):
+    base = importr('base')
+    
+    with robjects.conversion.localconverter(robjects.default_converter + robjects.numpy2ri.converter):
+        r_object = base.readRDS(io.BytesIO(file_data))
+        return robjects.conversion.rpy2py(r_object)
+
+def read_h5ad(file_data):
+    with io.BytesIO(file_data) as f:
+        data = anndata.read_h5ad(f)
+        return data
+
 def read_file_from_s3(bucket_name, prefix):
     response = list_s3_objects(bucket_name, prefix)
     
@@ -69,18 +69,23 @@ def read_file_from_s3(bucket_name, prefix):
         unprocessed_data = get_s3_objects(bucket_name, file_key)
         
         if file_key.endswith('.RData'):
-            data_type = 'RData'
             processed_data = read_RData(unprocessed_data)
+
+            parts = file_key.split('/')
+            information = {'study' : parts[1], 'file_name' : parts[3], 'data': processed_data}
+                
+            file_list.append(information)
+            
         elif file_key.endswith('.h5ad'):
-            data_type = 'h5ad'
             processed_data = read_h5ad(unprocessed_data)
+            
+            file_list.append(information)
+            
         else:
             # print for debugging
             # !!! Delete this print after completing this project !!!
             print(f"Unsupported file type for key: {file_key}") 
             
             continue
-        
-        file_list.append({'study' : study_name, 'sample' : sample_name, 'data_type' : data_type,'data': processed_data})
     
     return file_list
