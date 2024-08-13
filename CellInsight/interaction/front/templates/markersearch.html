@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marker Search</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        select {
+            width: 200px;
+            padding: 5px;
+        }
+        option {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        body {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+        }
+        label {
+            margin-right: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Marker Search</h1>
+    </header>
+
+    <div>
+        <form method="GET" id="filterForm">
+            <label for="organ">Choose an Organ: </label>
+            <select id="organ" name="organ" onchange="populateCellTypes()">
+                <option value="All">All</option>
+                {% for organ, cell_types in organ_cell_types_items %}
+                <option value="{{ organ }}">{{ organ }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="cellType">Choose a Cell Type: </label>
+            <select id="cellType" name="cell_type" onchange="filterMarkers()">
+                <option value="All">All</option>
+            </select>
+        </form>
+    </div>
+
+    <br>
+
+    <div>
+        {{ markergene_html|safe }}
+    </div>
+
+    <script>
+    var organCellTypes = JSON.parse('{{ organ_cell_types_json|escapejs }}');
+
+    function populateCellTypes() {
+        var organSelect = document.getElementById("organ");
+        var cellTypeSelect = document.getElementById("cellType");
+        var selectedOrgan = organSelect.value;
+
+        cellTypeSelect.innerHTML = '<option value="All">All</option>';
+
+        if (selectedOrgan in organCellTypes) {
+            var cellTypes = organCellTypes[selectedOrgan];
+            for (var i = 0; i < cellTypes.length; i++) {
+                var option = document.createElement("option");
+                option.value = cellTypes[i].split(' (')[0];  
+                option.text = cellTypes[i];
+                cellTypeSelect.appendChild(option);
+            }
+        }
+    }
+
+    function filterMarkers() {
+        // 이 함수에서 선택된 Organ과 Cell Type에 따라 테이블 데이터를 필터링하는 로직을 구현할 수 있습니다.
+    }
+
+    window.onload = function() {
+        populateCellTypes();
+    };
+    </script>
+</body>
+</html>

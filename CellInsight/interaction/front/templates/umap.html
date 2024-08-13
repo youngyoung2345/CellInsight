@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block left_section %}
+    <a href="{% url 'preprocessing' %}">Back to Preprocessing</a>
+{% endblock %}
+
+{% block right_section %}
+    <h2>UMAP Plot</h2>
+    <img src="/{{ umap_plot }}" alt="UMAP Plot">
+{% endblock %}
