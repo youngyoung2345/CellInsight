@@ -47,7 +47,7 @@ def count_clusters_with_gene(adata, gene_name, cluster_key='leiden', threshold=0
     return count
 
 # get a file from database
-data = read_file_from_s3(bucket_name, prefix)
+data = models.read_file_from_s3(bucket_name, prefix)
 
 #{'study' : study_name, 'sample' : sample_name, 'data_type' : data_type,'data': processed_data}
 
