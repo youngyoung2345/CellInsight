@@ -17,7 +17,22 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-
+from interaction import views
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
+   # path('upload/', views.upload_file, name='upload_file'),
+   # path('success/', views.success, name='success'),
+
+    path('', views.welcome, name='welcome'),
+    path('preprocessing/', views.preprocessing, name='preprocessing'),
+    path('qc_process/', views.qc_process, name='qc_process'),
+    path('mapcell_process/', views.mapcell_process, name='mapcell_process'),
+    path('umap/', views.umap_view, name='umap_view'),
+    path('markersearch/', views.markersearch, name='markersearch'), 
+    path('search/', views.search, name='search'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
