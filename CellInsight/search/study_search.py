@@ -13,6 +13,11 @@ def search_study(bucket_name, database_name, study_name):
             return False
     except:
         return False
-    
-    
-    
+
+def search_PanglaoDB_study_attribute(bucket_name, attribute):
+
+    return
+
+def search_singlecellportal_study_attribute(bucket_name, attribute):
+
+    return
