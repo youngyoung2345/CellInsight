@@ -6,6 +6,7 @@ import interaction.forms as forms
 import search.marker_search as marker_search
 import pandas as pd
 import os
+import preprocessing.Umap as Umap
 def handle_uploaded_file(f):
     media_path = 'media'
     if not os.path.exists(media_path):
@@ -92,14 +93,42 @@ def mapcell_process(request):
     return HttpResponseRedirect('/preprocessing/')
 
 def umap_view(request):
-    umap_plot = request.GET.get('umap_plot')
-    return render(request, 'umap.html', {'umap_plot': umap_plot})
+    user_umap_plot = request.GET.get('umap_plot')
+    s3_umap_plot = None
 
+    if request.method == 'POST':
+        folder_name = request.POST.get('s3_file')
+        delimiter = request.POST.get('delimiter', '\t')
 
-from django.shortcuts import render
-import search.marker_search as marker_search
-import json
+        if folder_name:
+            try:
+                # 클러스터 파일 가져오기 및 UMAP 생성
+                cluster_file2 = Umap.fetch_cluster_files(folder_name)
+                
+                if cluster_file2:
+                    # 선택된 클러스터 파일로 UMAP 생성
+                    s3_umap_plot = Umap.fetch_and_process_file(cluster_file2, delimiter)
+                else:
+                    print("No cluster files found.")
+            except Exception as e:
+                print(f"Error fetching and processing file {folder_name}: {str(e)}")
+                return render(request, 'umap.html', {
+                    'user_umap_plot': user_umap_plot,
+                    's3_umap_plot': None,
+                    's3_files': Umap.fetch_s3_folder_list(),
+                    'error_message': f"Error processing file: {str(e)}"
+                })
 
+    # S3 파일 목록 가져오기
+    s3_files = Umap.fetch_s3_folder_list()
+
+    return render(request, 'umap.html', {
+        'user_umap_plot': user_umap_plot,
+        's3_umap_plot': s3_umap_plot,
+        's3_files': s3_files,
+    })
+
+    
 def markersearch(request):
     # marker_search.py에서 DataFrame 데이터를 가져옴
     markergene_df = marker_search.fetch_markers()
