@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CellInsight</title>
+    <style>
+        .container {
+            display: flex;
+        }
+        .section {
+            flex: 1;
+            padding: 20px;
+        }
+        .left-section {
+            width: 300px;
+            flex: none;
+            border-right: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to CellInsight</h1>
+        <nav>
+            <a href="{% url 'preprocessing' %}">Preprocessing</a>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="section left-section">
+            {% block left_section %}{% endblock %}
+        </div>
+        <div class="section right-section">
+            {% block right_section %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>
