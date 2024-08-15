@@ -5,6 +5,44 @@
 {% endblock %}
 
 {% block right_section %}
-    <h2>UMAP Plot</h2>
-    <img src="/{{ umap_plot }}" alt="UMAP Plot">
+    <h2>UMAP Plots</h2>
+    
+    <!-- 사용자 파일로 생성된 UMAP -->
+    <h3>Your UMAP Plot</h3>
+    {% if user_umap_plot %}
+        <img src="/{{ user_umap_plot }}" alt="User UMAP Plot">
+    {% else %}
+        <p>No UMAP plot from your uploaded file. Please upload a file to generate UMAP.</p>
+    {% endif %}
+    
+    <hr>
+
+    <!-- S3 파일 선택 섹션 -->
+    <h3>Select a File from S3</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="s3_file">Choose a file:</label>
+        <select id="s3_file" name="s3_file" required>
+            <option value="" disabled selected>Select a file</option>
+            {% for file in s3_files %}
+            <option value="{{ file }}">{{ file }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <label for="delimiter">Choose delimiter:</label>
+        <select id="delimiter" name="delimiter">
+            <option value=",">Comma (,)</option>
+            <option value="\t">Tab (\t)</option>
+        </select>
+        <br><br>
+        <input type="submit" value="Generate S3 UMAP">
+    </form>
+
+    <!-- S3 파일로 생성된 UMAP -->
+    <h3>S3 UMAP Plot</h3>
+    {% if s3_umap_plot %}
+        <img src="/{{ s3_umap_plot }}" alt="S3 UMAP Plot">
+    {% else %}
+        <p>No UMAP plot from selected S3 file. Please select a file to generate UMAP.</p>
+    {% endif %}
 {% endblock %}
