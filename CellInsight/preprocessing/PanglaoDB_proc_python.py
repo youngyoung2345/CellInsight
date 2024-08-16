@@ -15,6 +15,8 @@ import numpy as np
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 
+from search import study_search
+
 pandas2ri.activate()
 
 ro.r.source('PanglaoDB_proc_R.R')
@@ -22,7 +24,7 @@ process_panglaodb = ro.r['process_panglaodb']
 
 def process_PanglaoDB(data_path, additional_data):
     '''
-    data_path : 
+    data_path : EX) cellinsight-bucket/PanglaoDB/SRA203368/PanglaoDB/SRA203368_SRS866906.sparse.RData
     additional_data : list consisting of SRA, SRS, SRR, Species, Tumor, Protocol, Instrument, Full-length mRNA-seq, Number of cells,
                       Number of exp. genes, Number of clusters, Tissue, Cell line (Y/N), Primary adult tissue (Y/N), and Target cell population
     
