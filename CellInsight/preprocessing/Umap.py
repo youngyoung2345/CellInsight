@@ -10,8 +10,8 @@ def fetch_s3_folder_list():
     bucket_name = 'cellinsight-bucket'
     s3_client = boto3.client(
         's3',
-        aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
-        aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',
+        aws_access_key_id='',  
+        aws_secret_access_key='',
         endpoint_url='https://kr.object.ncloudstorage.com',
         region_name='kr-standard',
         config=Config(signature_version='s3v4')
@@ -31,8 +31,8 @@ def fetch_cluster_files(folder_name):
 
     s3_client = boto3.client(
         's3',
-        aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
-        aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  
+        aws_access_key_id='',  
+        aws_secret_access_key='',  
         endpoint_url='https://kr.object.ncloudstorage.com',
         region_name='kr-standard',
         config=Config(signature_version='s3v4')
@@ -59,8 +59,8 @@ def fetch_and_process_file(cluster_files2, delimiter):
 
     s3_client = boto3.client(
         's3',
-        aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
-        aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  
+        aws_access_key_id='',  
+        aws_secret_access_key='',  
         endpoint_url='https://kr.object.ncloudstorage.com',
         region_name='kr-standard',
         config=Config(signature_version='s3v4')

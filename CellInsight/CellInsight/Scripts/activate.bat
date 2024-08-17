@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\JIWON\Desktop\marker\CellInsight\CellInsight\CellInsight
+set VIRTUAL_ENV=C:\Users\JIWON\Desktop\chu\CellInsight\CellInsight\CellInsight
 
 if not defined PROMPT set PROMPT=$P$G
 
