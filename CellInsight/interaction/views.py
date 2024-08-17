@@ -32,11 +32,15 @@ def preprocessing(request):
                 'file_path': file_path,
                 'file_format': file_format
             })
-    
     else:
         form = forms.UploadFileForm()
         qc_form = forms.QCForm()
-    return render(request, 'upload.html', {'form':form})
+        return render(request, 'preprocessing.html', {
+            'file_uploaded': False,
+            'form': form,
+            'qc_form': qc_form
+        })
+
 
 def qc_process(request):
     if request.method == 'POST':

@@ -2,22 +2,18 @@
 
 {% block left_section %}
     <a href="{% url 'welcome' %}">Back to Welcome Page</a>
-    <h2>Upload your file</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Upload</button>
-    </form>
-
-    {% if file_uploaded %}
-        <button onclick="document.getElementById('qc-form').submit();">Preprocessing</button>
+    <h2>Preprocessing</h2>
+    {% if not file_uploaded %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Upload</button>
+        </form>
     {% endif %}
 {% endblock %}
 
 {% block right_section %}
-    {% if not file_uploaded %}
-        <p>Upload a file to begin preprocessing.</p>
-    {% else %}
+    {% if file_uploaded %}
         <h2>QC Values</h2>
         <form id="qc-form" method="post" action="{% url 'qc_process' %}">
             {% csrf_token %}
@@ -50,5 +46,7 @@
             </form>
         {% endif %}
     {% endif %}
-{% endif %}
+    {% else %}
+        <p>Upload a file to begin preprocessing.</p>
+    {% endif %}
 {% endblock %}
