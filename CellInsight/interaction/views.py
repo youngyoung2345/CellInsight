@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.http import urlencode
 from preprocessing.prepo import preprocess_and_visualize
@@ -7,6 +7,8 @@ import search.marker_search as marker_search
 import pandas as pd
 import os
 import preprocessing.Umap as Umap
+import search.marker_search as marker_search
+
 def handle_uploaded_file(f):
     media_path = 'media'
     if not os.path.exists(media_path):
@@ -32,11 +34,15 @@ def preprocessing(request):
                 'file_path': file_path,
                 'file_format': file_format
             })
-    
     else:
         form = forms.UploadFileForm()
         qc_form = forms.QCForm()
-    return render(request, 'upload.html', {'form':form})
+        return render(request, 'preprocessing.html', {
+            'file_uploaded': False,
+            'form': form,
+            'qc_form': qc_form
+        })
+
 
 def qc_process(request):
     if request.method == 'POST':
@@ -129,25 +135,26 @@ def umap_view(request):
     })
 
     
+from django.shortcuts import render
+import search.marker_search as marker_search
+
 def markersearch(request):
-    # marker_search.py에서 DataFrame 데이터를 가져옴
-    markergene_df = marker_search.fetch_markers()
+    selected_organ = request.GET.get('organ', 'All')
+    selected_cell_type = request.GET.get('cell_type', 'All')
 
-    # organ별로 cell type 리스트 생성
-    organ_cell_types = markergene_df.groupby('organ')['cell type'].apply(list).to_dict()
-    for organ in organ_cell_types:
-        cell_type_counts = pd.Series(organ_cell_types[organ]).value_counts()
-        organ_cell_types[organ] = [f"{cell_type} ({count})" for cell_type, count in cell_type_counts.items()]
+    # 필터링된 결과를 가져옴
+    organ_cell_types, html_code = marker_search.fetch_markers(selected_organ, selected_cell_type)
 
-    # items()의 결과를 리스트로 변환하여 템플릿에 전달
-    organ_cell_types_items = list(organ_cell_types.items())
+    # 선택된 organ에 해당하는 cell types 리스트 가져오기
+    cell_types = organ_cell_types.get(selected_organ, []) if selected_organ != 'All' else []
 
-    # DataFrame을 HTML 테이블로 변환
-    markergene_html = markergene_df.to_html(classes='table table-striped', index=False)
-
+    # 템플릿으로 데이터 전달
     return render(request, 'markersearch.html', {
-        'organ_cell_types_items': organ_cell_types_items,
-        'markergene_html': markergene_html,
+        'organ_cell_types_items': organ_cell_types.items(),
+        'selected_organ': selected_organ,
+        'selected_cell_type': selected_cell_type,
+        'cell_types': cell_types,
+        'html_code': html_code,
     })
 
 def search(request):
