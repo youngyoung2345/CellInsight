@@ -1,8 +1,3 @@
-import boto3
-import pandas as pd
-import scanpy as sc
-import matplotlib.pyplot as plt
-from botocore.client import Config
 import io
 import os
 
@@ -19,14 +14,12 @@ def fetch_s3_folder_list():
 
     # S3의 모든 폴더 목록 가져오기
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix='singlecellportal/', Delimiter='/')
-    
-    # 폴더 목록 추출
+
     folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
     
     return folders
 
 def fetch_cluster_files(folder_name):
-    bucket_name = 'cellinsight-bucket'
     cluster_prefix = folder_name.rstrip('/') + '/cluster/'  # 클러스터 파일 경로
 
     s3_client = boto3.client(
@@ -39,8 +32,9 @@ def fetch_cluster_files(folder_name):
     )
 
     # 선택된 폴더의 cluster 디렉토리 내의 파일 목록 가져오기
+
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=cluster_prefix)
-    cluster_files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
+
 
     # cluster_prefix 콘솔에 출력
     print(f"Cluster Prefix: {cluster_prefix}")

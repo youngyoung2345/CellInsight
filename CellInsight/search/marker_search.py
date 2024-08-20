@@ -84,4 +84,5 @@ def fetch_markers(selected_organ='All', selected_cell_type='All'):
     </table>
     """
 
+
     return organ_cell_types, html_code
