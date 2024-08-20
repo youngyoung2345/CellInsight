@@ -2,7 +2,7 @@ from django import forms
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
-    file_format = forms.ChoiceField(choices=[('panglaodb', 'PanglaoDB'), ('h5ad', 'H5AD')])
+    file_format = forms.ChoiceField(choices=[('h5ad', 'H5AD'),('txt', 'Text/Clustering File'),('cellranger', 'CellRanger Output'),('csv', 'CSV File')])
 
 
 class QCForm(forms.Form):
