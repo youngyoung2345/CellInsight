@@ -1,5 +1,5 @@
-'''
 
+'''
 Process data from the Single Cell Portal
 
 Input:
@@ -25,5 +25,5 @@ def process_Single_Cell_Portal(file_path, data_type):
             processed_data = scanpy.read_10x_mtx(object)
         case _:
             return False
-    
+
     return processed_data
