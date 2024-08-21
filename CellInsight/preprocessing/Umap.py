@@ -91,3 +91,4 @@ def fetch_and_process_file(cluster_files2, delimiter):
     plt.savefig(umap_plot_path)
     print(f"UMAP plot saved to {umap_plot_path}")
     return umap_plot_path
+

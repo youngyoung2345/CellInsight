@@ -1,6 +1,5 @@
 import os
 import matplotlib
-
 import scanpy as sc
 import scrublet as scr
 import matplotlib.pyplot as plt
@@ -67,4 +66,5 @@ def draw_and_save_umap_plot(preprocessed_data, figures_path='media/figures'):
     plt.close()
 
     return umap_plot_path
+
 
