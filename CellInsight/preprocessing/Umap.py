@@ -1,20 +1,15 @@
 import io
 import os
 
+from migrations import models
+
+import pandas as pd
+import scanpy as sc
+import matplotlib.pyplot as plt
+
+
 def fetch_s3_folder_list():
-    bucket_name = 'cellinsight-bucket'
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id='',  
-        aws_secret_access_key='',
-        endpoint_url='https://kr.object.ncloudstorage.com',
-        region_name='kr-standard',
-        config=Config(signature_version='s3v4')
-    )
-
-    # S3의 모든 폴더 목록 가져오기
-    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix='singlecellportal/', Delimiter='/')
-
+    response = models.list_s3_objects(Bucket='cellinsight-bucket', Prefix='singlecellportal/', Delimiter= True)
     folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
     
     return folders
@@ -22,19 +17,9 @@ def fetch_s3_folder_list():
 def fetch_cluster_files(folder_name):
     cluster_prefix = folder_name.rstrip('/') + '/cluster/'  # 클러스터 파일 경로
 
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id='',  
-        aws_secret_access_key='',  
-        endpoint_url='https://kr.object.ncloudstorage.com',
-        region_name='kr-standard',
-        config=Config(signature_version='s3v4')
-    )
-
     # 선택된 폴더의 cluster 디렉토리 내의 파일 목록 가져오기
-
-    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=cluster_prefix)
-
+    response = models.s3_client.list_objects_v2(Bucket='cellinsight-bucket', Prefix=cluster_prefix)
+    cluster_files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
 
     # cluster_prefix 콘솔에 출력
     print(f"Cluster Prefix: {cluster_prefix}")
@@ -51,20 +36,12 @@ def fetch_cluster_files(folder_name):
 def fetch_and_process_file(cluster_files2, delimiter):
     bucket_name = 'cellinsight-bucket'
 
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id='',  
-        aws_secret_access_key='',  
-        endpoint_url='https://kr.object.ncloudstorage.com',
-        region_name='kr-standard',
-        config=Config(signature_version='s3v4')
-    )
     print(f"Cluster Files2: {cluster_files2}")
     try:
         # S3에서 클러스터 파일 가져오기
-        response = s3_client.get_object(Bucket=bucket_name, Key=cluster_files2)
+        response = models.s3_client.get_object(Bucket=bucket_name, Key=cluster_files2)
         content = response['Body'].read()
-    except s3_client.exceptions.NoSuchKey:
+    except models.s3_client.exceptions.NoSuchKey:
         print(f"Error: The specified key {cluster_files2} does not exist.")
         return None
     except Exception as e:
