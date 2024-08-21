@@ -13,12 +13,8 @@ Output:
 import anndata
 import numpy as np
 import rpy2.robjects as ro
-from rpy2.robjects import pandas2ri
+from rpy2.robjects import pandas2ri, conversion, default_converter
 
-pandas2ri.activate()
-
-ro.r.source('PanglaoDB_proc_R.R')
-process_panglaodb = ro.r['process_panglaodb']
 
 def process_PanglaoDB(data_path, additional_data):
     '''
@@ -27,8 +23,13 @@ def process_PanglaoDB(data_path, additional_data):
                       Number of exp. genes, Number of clusters, Tissue, Cell line (Y/N), Primary adult tissue (Y/N), and Target cell population
     
     '''
-    
-    object = process_panglaodb(data_path)
+    with conversion.localconverter(default_converter):
+        pandas2ri.activate()
+
+        ro.r.source('./PanglaoDB_proc_R.R')
+        process_panglaodb = ro.r['process_panglaodb']
+
+        object = process_panglaodb(data_path)
     
     counts_matrix = np.array(object.rx2('counts_matrix'))
     col_data_df = pandas2ri.rpy2py(object.rx2('col_data_df'))
