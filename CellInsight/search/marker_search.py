@@ -1,23 +1,15 @@
-import pandas as pd
-import boto3
-from botocore.client import Config
 import io
+import pandas as pd
+
+from migrations import models
 
 def fetch_markers(selected_organ='All', selected_cell_type='All'):
     bucket_name = 'cellinsight-bucket'
     file_key = 'PanglaoDB/markers/PanglaoDB_markers_27_Mar_2020.tsv'
 
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id='',  # AWS Access Key
-        aws_secret_access_key='',  # AWS Secret Access Key
-        endpoint_url='https://kr.object.ncloudstorage.com',
-        region_name='kr-standard',
-        config=Config(signature_version='s3v4')
-    )
-
-    response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
+    response = models.s3_client.get_object(Bucket=bucket_name, Key=file_key)
     content = response['Body'].read()
+    
     dataset = pd.read_csv(io.BytesIO(content), delimiter='\t')
 
     # Organ별로 cell type 목록 생성
