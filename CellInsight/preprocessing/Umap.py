@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 def fetch_s3_folder_list():
     response = models.list_s3_objects(Bucket='cellinsight-bucket', Prefix='singlecellportal/', Delimiter= True)
-    
     folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
     
     return folders

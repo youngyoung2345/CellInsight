@@ -15,8 +15,6 @@ import numpy as np
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 
-from search import study_search
-
 pandas2ri.activate()
 
 ro.r.source('PanglaoDB_proc_R.R')

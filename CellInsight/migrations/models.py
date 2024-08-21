@@ -29,9 +29,17 @@ s3_client = boto3.client(
     config=Config(signature_version='s3v4')
 )
 
-def list_s3_objects(bucket_name, prefix):
+def list_s3_objects(bucket_name, prefix, delimiter=False):
     try:
-        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+        params = {
+            'Bucket': bucket_name,
+            'Prefix': prefix,
+        }
+        
+        if delimiter:
+            params['Delimiter'] = '/'
+
+        response = s3_client.list_objects_v2(**params)
         return response
     except:
         return None
@@ -55,8 +63,38 @@ def read_h5ad(file_data):
     with io.BytesIO(file_data) as f:
         data = anndata.read_h5ad(f)
         return data
+    
+def read_PanglaoDB_from_s3(bucket_name, prefix):
+    response = list_s3_objects(bucket_name, prefix)
+    
+    if response == None:
+        return None
+    
+    file_list = [] 
+    
+    for file in response['Contents']:
+        file_key = file['Key']
+        unprocessed_data = get_s3_objects(bucket_name, file_key)
+        
+        if file_key.endswith('.RData'):
+            processed_data = read_RData(unprocessed_data)
 
-def read_file_from_s3(bucket_name, prefix):
+            parts = file_key.split('/')
+            information = {'study' : parts[1], 'file_name' : parts[2], 'data': processed_data}
+                
+            file_list.append(information)
+            
+        else:
+            # print for debugging
+            # !!! Delete this print after completing this project !!!
+            print(f"Unsupported file type for key: {file_key}") 
+            
+            continue
+    
+    return file_list
+
+
+def read_singlecellportal_from_s3(bucket_name, prefix):
     response = list_s3_objects(bucket_name, prefix)
     
     if response == None:
@@ -72,12 +110,15 @@ def read_file_from_s3(bucket_name, prefix):
             processed_data = read_RData(unprocessed_data)
 
             parts = file_key.split('/')
-            information = {'study' : parts[1], 'file_name' : parts[3], 'data': processed_data}
+            information = {'study' : parts[1], 'file_name' : parts[2], 'data': processed_data}
                 
             file_list.append(information)
             
         elif file_key.endswith('.h5ad'):
             processed_data = read_h5ad(unprocessed_data)
+
+            parts = file_key.split('/')
+            information = {'study' : parts[1], }
             
             file_list.append(information)
             
