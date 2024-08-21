@@ -18,6 +18,12 @@ def preprocess_and_visualize(file_path, file_format, min_counts, min_genes, max_
     elif file_format == 'h5ad':
         from . import Single_Cell_Portal_proc_copy as scp  # 상대 경로로 수정
         adata = scp.process_Single_Cell_Portal(file_path)
+    elif file_format in ['txt', 'csv']:
+        from . import Single_Cell_Portal_proc_copy as scp  # 상대 경로로 수정
+        adata = scp.process_Single_Cell_Portal_csv(file_path)
+    elif file_format == 'cellranger':
+        from . import Single_Cell_Portal_proc_copy as scp  # 상대 경로로 수정
+        adata = scp.process_Single_Cell_Portal_CellRanger(file_path)
     # 시각화 및 저장 경로 설정
     figures_path = 'media/figures'
     if not os.path.exists(figures_path):
