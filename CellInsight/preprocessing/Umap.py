@@ -1,12 +1,11 @@
 import io
 import os
 
-from migrations import models
-
 import pandas as pd
 import scanpy as sc
 import matplotlib.pyplot as plt
 
+from migrations import models
 
 def fetch_s3_folder_list():
     response = models.list_s3_objects(Bucket='cellinsight-bucket', Prefix='singlecellportal/', Delimiter= True)

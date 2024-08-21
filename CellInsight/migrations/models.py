@@ -7,8 +7,10 @@ import anndata
 from rpy2 import robjects
 from rpy2.robjects.packages import importr
 
-# boto3.resource provides low-level interface 
 bucket_name='cellinsight-bucket'
+
+# boto3.resource provides low-level interface 
+
 s3_resource = boto3.resource(
     's3',
     aws_access_key_id='',  

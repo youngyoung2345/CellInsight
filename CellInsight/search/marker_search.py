@@ -4,10 +4,7 @@ import pandas as pd
 from migrations import models
 
 def fetch_markers(selected_organ='All', selected_cell_type='All'):
-    bucket_name = 'cellinsight-bucket'
-    file_key = 'PanglaoDB/markers/PanglaoDB_markers_27_Mar_2020.tsv'
-
-    response = models.s3_client.get_object(Bucket=bucket_name, Key=file_key)
+    response = models.s3_client.get_object(Bucket='cellinsight-bucket', Key='PanglaoDB/markers/PanglaoDB_markers_27_Mar_2020.tsv')
     content = response['Body'].read()
     
     dataset = pd.read_csv(io.BytesIO(content), delimiter='\t')
