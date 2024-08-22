@@ -9,12 +9,38 @@ Output:
  - processed_data: processed data in seurat object format
 
 '''
-
+import io
 import anndata
 import numpy as np
+import pandas as pd
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri, conversion, default_converter
 
+from migrations import models
+
+def import_additional_data(data_path):
+    '''
+    data_path : EX) PanglaoDB/SRA621638/SRA621638_SRS2610285.sparse.RData
+    '''
+    
+    parts = data_path.split('/')
+    csv_path = f'PanglaoDB/{parts[2]}/{parts[2]}_data.csv'
+    unprocessed_data = models.get_s3_objects('cellinsight-bucket', csv_path)
+    csv = pd.read_csv(io.StringIO(unprocessed_data.decode('utf-8')))
+
+    #EX) SRA621638_SRS2610285.sparse.RData -> SRA621638_SRS2610285
+    
+    data_name = (parts[2].split('.'))[0] 
+    
+    if len(data_name) != 9: #EX) data_name : SRA621638_SRS2610285
+        SSRA, SRS = data_name.split('_')
+
+        return csv[(csv['SRA'] == SRA) & (csv['SRS'] == SRS)]
+
+    else: #EX) data_name : SRA621638
+        SRA = data_name
+
+        return csv[csv['SRA'] == SRA]
 
 def process_PanglaoDB(data_path, additional_data):
     '''

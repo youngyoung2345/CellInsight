@@ -13,7 +13,6 @@ import preprocessing.umap as Umap
 def only_render(request, html):
     return render(request, html)
 
-
 def preprocessing(request):
     if request.method == 'POST':
         form = forms.UploadFileForm(request.POST, request.FILES)

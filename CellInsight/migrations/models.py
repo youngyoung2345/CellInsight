@@ -53,6 +53,13 @@ def get_s3_objects(bucket_name, file_key):
         return unprocessed_data
     except:
         return None
+    
+def download_s3_objects(bucket_name, file_key, file_path):
+    try:
+        s3_client.download_file(bucket_name, file_key, file_path)
+        return 
+    except:
+        return False
 
 def read_RData(file_data):
     base = importr('base')
@@ -87,7 +94,6 @@ def read_PanglaoDB_from_s3(bucket_name, prefix):
             file_list.append(information)
     
     return file_list
-
 
 def read_singlecellportal_from_s3(bucket_name, prefix):
     

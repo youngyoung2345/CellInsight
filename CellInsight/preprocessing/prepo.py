@@ -60,11 +60,10 @@ def draw_and_save_umap_plot(preprocessed_data, figures_path='media/figures'):
     sc.pp.neighbors(preprocessed_data, n_pcs=10)
     sc.tl.umap(preprocessed_data)
     sc.tl.leiden(preprocessed_data, resolution=0.5)
+
     sc.pl.umap(preprocessed_data, color=['leiden'])
 
     plt.savefig('media/figures/umap_plot.png')
     plt.close()
 
     return umap_plot_path
-
-
