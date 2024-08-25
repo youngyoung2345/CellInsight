@@ -1,3 +1,4 @@
+<!-- umap.html -->
 {% extends 'base.html' %}
 
 {% block left_section %}
@@ -17,15 +18,15 @@
     
     <hr>
 
-    <!-- S3 파일 선택 섹션 -->
-    <h3>Select a File from S3</h3>
+    <!-- S3 및 PanglaoDB 파일 선택 섹션 -->
+    <h3>Select a File from S3 or PanglaoDB</h3>
     <form method="POST">
         {% csrf_token %}
         <label for="s3_file">Choose a file:</label>
         <select id="s3_file" name="s3_file" required>
             <option value="" disabled selected>Select a file</option>
-            {% for file in s3_files %}
-            <option value="{{ file }}">{{ file }}</option>
+            {% for folder, display_name in s3_files %}
+            <option value="{{ folder }}">{{ display_name }}</option>
             {% endfor %}
         </select>
         <br><br>
@@ -35,14 +36,41 @@
             <option value="\t">Tab (\t)</option>
         </select>
         <br><br>
-        <input type="submit" value="Generate S3 UMAP">
+        <input type="submit" value="Generate UMAP">
     </form>
 
-    <!-- S3 파일로 생성된 UMAP -->
-    <h3>S3 UMAP Plot</h3>
+    <!-- 생성된 UMAP 및 관련 데이터 -->
+    <h3>UMAP Plot</h3>
     {% if s3_umap_plot %}
         <img src="/{{ s3_umap_plot }}" alt="S3 UMAP Plot">
+    {% elif panglao_umap_plot %}
+        <img src="/{{ panglao_umap_plot }}" alt="PanglaoDB UMAP Plot">
     {% else %}
-        <p>No UMAP plot from selected S3 file. Please select a file to generate UMAP.</p>
+        <p>No UMAP plot from selected file. Please select a file to generate UMAP.</p>
+    {% endif %}
+
+    <!-- CSV 데이터 표시 -->
+    <h3>CSV Data</h3>
+    {% if csv_data %}
+        <table>
+            <thead>
+                <tr>
+                    {% for col in csv_data.0.keys %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in csv_data %}
+                <tr>
+                    {% for value in row.values %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No CSV data available for the selected file.</p>
     {% endif %}
 {% endblock %}

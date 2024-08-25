@@ -1,28 +1,14 @@
+{% load static %} 
 <!DOCTYPE html>
 <html>
 <head>
     <title>CellInsight</title>
-    <style>
-        .container {
-            display: flex;
-        }
-        .section {
-            flex: 1;
-            padding: 20px;
-        }
-        .left-section {
-            width: 300px;
-            flex: none;
-            border-right: 1px solid #ddd;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/welcome_style.css' %}">
 </head>
 <body>
     <header>
         <h1>Welcome to CellInsight</h1>
-        <nav>
-            
-        </nav>
+        <nav></nav>
     </header>
     <div class="container">
         <div class="section left-section">

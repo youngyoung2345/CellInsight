@@ -7,12 +7,14 @@ import anndata
 from rpy2 import robjects
 from rpy2.robjects.packages import importr
 
-# boto3.resource provides low-level interface 
 bucket_name='cellinsight-bucket'
+
+# boto3.resource provides low-level interface 
+
 s3_resource = boto3.resource(
     's3',
-    aws_access_key_id='',  
-    aws_secret_access_key='',  
+    aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
+    aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  
     endpoint_url='https://kr.object.ncloudstorage.com',
     region_name = 'kr-standard',
     config=Config(signature_version='s3v4')
@@ -22,16 +24,24 @@ s3_resource = boto3.resource(
 
 s3_client = boto3.client(
     's3',
-    aws_access_key_id='',  
-    aws_secret_access_key='',  
+    aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
+    aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  
     endpoint_url='https://kr.object.ncloudstorage.com',
     region_name = 'kr-standard',
     config=Config(signature_version='s3v4')
 )
 
-def list_s3_objects(bucket_name, prefix):
+def list_s3_objects(bucket_name, prefix, delimiter=False):
     try:
-        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+        params = {
+            'Bucket': bucket_name,
+            'Prefix': prefix,
+        }
+        
+        if delimiter:
+            params['Delimiter'] = '/'
+
+        response = s3_client.list_objects_v2(**params)
         return response
     except:
         return None
@@ -43,6 +53,19 @@ def get_s3_objects(bucket_name, file_key):
         return unprocessed_data
     except:
         return None
+    
+def download_s3_objects(bucket_name, file_key, file_path):
+    try:
+        print(f"Downloading {file_key} from bucket {bucket_name} to {file_path}")
+        s3_client.download_file(bucket_name, file_key, file_path)
+        print(f"File downloaded successfully to {file_path}")
+        return True
+    except s3_client.exceptions.NoSuchKey:
+        print(f"Error: The specified key {file_key} does not exist.")
+        return False
+    except Exception as e:
+        print(f"Error downloading file {file_key}: {str(e)}")
+        return False
 
 def read_RData(file_data):
     base = importr('base')
@@ -55,13 +78,13 @@ def read_h5ad(file_data):
     with io.BytesIO(file_data) as f:
         data = anndata.read_h5ad(f)
         return data
-
-def read_file_from_s3(bucket_name, prefix):
+    
+def read_PanglaoDB_from_s3(bucket_name, prefix):
     response = list_s3_objects(bucket_name, prefix)
     
     if response == None:
         return None
-        
+    
     file_list = [] 
     
     for file in response['Contents']:
@@ -72,20 +95,12 @@ def read_file_from_s3(bucket_name, prefix):
             processed_data = read_RData(unprocessed_data)
 
             parts = file_key.split('/')
-            information = {'study' : parts[1], 'file_name' : parts[3], 'data': processed_data}
+            information = {'study' : parts[1], 'file_name' : parts[2], 'data': processed_data}
                 
             file_list.append(information)
-            
-        elif file_key.endswith('.h5ad'):
-            processed_data = read_h5ad(unprocessed_data)
-            
-            file_list.append(information)
-            
-        else:
-            # print for debugging
-            # !!! Delete this print after completing this project !!!
-            print(f"Unsupported file type for key: {file_key}") 
-            
-            continue
+    
+    return file_list
+
+def read_singlecellportal_from_s3(bucket_name, prefix):
     
     return file_list
