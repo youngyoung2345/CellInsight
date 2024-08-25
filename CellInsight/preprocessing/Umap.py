@@ -200,7 +200,8 @@ def fetch_and_process_file_Panglao(folder_name):
     print("Processed data uns keys:")
     print(processed_data.uns.keys())
     # UMAP 생성
- 
+    print(additional_data)
+
     print("Processed data observation data:")
 
     # 제외할 열과 uns 키 목록
@@ -227,6 +228,15 @@ def fetch_and_process_file_Panglao(folder_name):
     print("Remaining obs columns:", processed_data.obs.columns)
     print("Current obs keys:")
     print(processed_data.obs.keys())
+    pd.set_option('display.max_rows', 10)
+    pd.set_option('display.max_columns', 10)
+
+    # Debugging information
+    print("Processed data observation data (first 100 rows):")
+    print(processed_data.obs.head(10))
+    
+    print("Processed data variable data (first 100 rows):")
+    print(processed_data.var.head(10))
     processed_data.layers['counts'] = processed_data.X.copy()
     sc.pp.normalize_total(processed_data, target_sum=1e4)
     sc.pp.log1p(processed_data)

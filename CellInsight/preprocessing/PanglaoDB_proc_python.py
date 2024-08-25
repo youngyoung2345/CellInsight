@@ -120,10 +120,10 @@ def process_PanglaoDB(data_path, additional_data):
         processed_data.obs['cell_ids'] = col_data_df
         processed_data.var['gene_ids'] = row_data_df
     
-    if additional_data is not None:
-        processed_data.obs['species__ontology_label'] = additional_data.get('Species', pd.NA)
-        processed_data.obs['library_preparation_protocol__ontology_label'] = additional_data.get('Protocol', pd.NA)
-        processed_data.obs['organ__ontology_label'] = additional_data.get('Tissue', pd.NA)
+    
+        processed_data.obs['species__ontology_label'] = additional_data['Species']
+        processed_data.obs['library_preparation_protocol__ontology_label'] = additional_data['Protocol']
+        processed_data.obs['organ__ontology_label'] = additional_data['Tissue']
         processed_data.obs['tumor'] = additional_data.get('Tumor', pd.NA)
         processed_data.obs['cell_line'] = additional_data.get('Cell line', pd.NA)
         processed_data.obs['primary_adult_tissue'] = additional_data.get('Primary adult tissue', pd.NA)
