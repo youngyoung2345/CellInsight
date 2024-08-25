@@ -13,8 +13,8 @@ bucket_name='cellinsight-bucket'
 
 s3_resource = boto3.resource(
     's3',
-    aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
-    aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  
+    aws_access_key_id='',  
+    aws_secret_access_key='',  
     endpoint_url='https://kr.object.ncloudstorage.com',
     region_name = 'kr-standard',
     config=Config(signature_version='s3v4')
@@ -24,8 +24,8 @@ s3_resource = boto3.resource(
 
 s3_client = boto3.client(
     's3',
-    aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  
-    aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  
+    aws_access_key_id='',  
+    aws_secret_access_key='',  
     endpoint_url='https://kr.object.ncloudstorage.com',
     region_name = 'kr-standard',
     config=Config(signature_version='s3v4')

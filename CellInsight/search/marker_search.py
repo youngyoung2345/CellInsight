@@ -9,8 +9,8 @@ def fetch_markers(selected_organ='All', selected_cell_type='All'):
 
     s3_client = boto3.client(
         's3',
-        aws_access_key_id='DvPdqKvWdjT5fGB1H3Xw',  # AWS Access Key
-        aws_secret_access_key='RCp2Td32coNhlK7IBHG1rCdlxWH49d19dNYk40SU',  # AWS Secret Access Key
+        aws_access_key_id='',  # AWS Access Key
+        aws_secret_access_key='',  # AWS Secret Access Key
         endpoint_url='https://kr.object.ncloudstorage.com',
         region_name='kr-standard',
         config=Config(signature_version='s3v4')
@@ -83,5 +83,6 @@ def fetch_markers(selected_organ='All', selected_cell_type='All'):
         </tbody>
     </table>
     """
+
 
     return organ_cell_types, html_code
