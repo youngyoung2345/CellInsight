@@ -1,46 +1,33 @@
-import io
-import os
-
+import boto3
 import pandas as pd
 import scanpy as sc
 import matplotlib.pyplot as plt
+from botocore.client import Config
+import io
+import os
+import numpy as np
 
+from preprocessing import PanglaoDB_proc_python
 from migrations import models
-
-def fetch_s3_folder_list():
-    response = models.list_s3_objects(Bucket='cellinsight-bucket', Prefix='singlecellportal/', Delimiter= True)
-    folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
-    
-    return folders
-
-def fetch_cluster_files(folder_name):
-    cluster_prefix = folder_name.rstrip('/') + '/cluster/'  # 클러스터 파일 경로
-
-    # 선택된 폴더의 cluster 디렉토리 내의 파일 목록 가져오기
-    response = models.s3_client.list_objects_v2(Bucket='cellinsight-bucket', Prefix=cluster_prefix)
-    cluster_files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
-
-    # cluster_prefix 콘솔에 출력
-    print(f"Cluster Prefix: {cluster_prefix}")
- # cluster_prefix 및 cluster_files 콘솔에 출력
-    print(f"Cluster Files: {cluster_files}")
-    # 파일이 없을 경우 경고 출력
-    if not cluster_files:
-        print(f"No cluster files found in {cluster_prefix}")
-    cluster_files2 = cluster_files[0]
-    print(f"Cluster Files2: {cluster_files2}")
-    return cluster_files2
 
 
 def fetch_and_process_file(cluster_files2, delimiter):
     bucket_name = 'cellinsight-bucket'
 
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id='',  
+        aws_secret_access_key='',  
+        endpoint_url='https://kr.object.ncloudstorage.com',
+        region_name='kr-standard',
+        config=Config(signature_version='s3v4')
+    )
     print(f"Cluster Files2: {cluster_files2}")
     try:
         # S3에서 클러스터 파일 가져오기
-        response = models.s3_client.get_object(Bucket=bucket_name, Key=cluster_files2)
+        response = s3_client.get_object(Bucket=bucket_name, Key=cluster_files2)
         content = response['Body'].read()
-    except models.s3_client.exceptions.NoSuchKey:
+    except s3_client.exceptions.NoSuchKey:
         print(f"Error: The specified key {cluster_files2} does not exist.")
         return None
     except Exception as e:
@@ -92,3 +79,128 @@ def fetch_and_process_file(cluster_files2, delimiter):
     print(f"UMAP plot saved to {umap_plot_path}")
     return umap_plot_path
 
+
+
+def fetch_s3_folder_list_Panglao():
+    bucket_name='cellinsight-bucket'
+    prefix = 'PanglaoDB/'
+    response = models.list_s3_objects(bucket_name, prefix, delimiter=True)
+    folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
+    return folders
+
+def fetch_first_file_in_folder(folder_name):
+    bucket_name = 'cellinsight-bucket'
+    
+
+    # 선택된 폴더 내 첫 번째 파일 가져오기
+    response =  models.list_s3_objects(bucket_name, folder_name)
+    files_in_folder = response.get('Contents', [])
+
+    if not files_in_folder:
+        print(f"No files found in {folder_name}")
+        return None
+    
+    first_file_key = files_in_folder[0]['Key']
+    print('first_file_key',first_file_key)
+    return first_file_key
+
+
+def fetch_and_process_file_Panglao(folder_name):
+    # 선택된 폴더에서 첫 번째 파일 가져오기
+    first_file_key = fetch_first_file_in_folder(folder_name)
+    if not first_file_key:
+        return None, None, None
+    print('first_file_key2',first_file_key)
+    bucket_name = 'cellinsight-bucket'
+    figures_path = 'media/figures'
+    local_file_path = os.path.join(figures_path, os.path.basename(first_file_key)).replace("\\", "/")
+    print(local_file_path)
+    # 파일 다운로드
+    models.download_s3_objects(bucket_name, first_file_key, local_file_path)
+    print(f"File downloaded to {local_file_path}")
+    
+    # 추가 데이터 가져오기
+    try:
+        additional_data = PanglaoDB_proc_python.import_additional_data(first_file_key)
+    except ValueError as e:
+        print(f"Error importing additional data: {str(e)}")
+        return None, None, None
+
+    # RData 파일을 읽고 UMAP 생성
+    try:
+        processed_data = PanglaoDB_proc_python.process_PanglaoDB(local_file_path, additional_data)
+    except Exception as e:
+        print(f"Error processing RData file: {str(e)}")
+        return None, None, None
+    # Debugging information
+    print("Processed data observation data:")
+    print(processed_data.obs.head())
+    
+    print("Processed data uns keys:")
+    print(processed_data.uns.keys())
+    # UMAP 생성
+    print(additional_data)
+
+    print("Processed data observation data:")
+
+    # 제외할 열과 uns 키 목록
+    columns_to_exclude = [
+        'cell_ids', 
+        'gene_ids',
+        'species__ontology_label', 
+        'library_preparation_protocol__ontology_label',
+        'organ__ontology_label', 
+        'tumor', 
+        'cell_line', 
+        'primary_adult_tissue'
+    ]
+
+    uns_keys_to_exclude = ['SRA', 'SRS', 'SRR', 'instrument']
+
+    # 제외할 열을 제거
+# 제외할 열을 제거
+# 제외할 열을 제거 (존재할 경우에만 제거)
+ 
+
+    # 확인을 위한 출력
+    print("Remaining uns keys:", processed_data.uns.keys())
+    print("Remaining obs columns:", processed_data.obs.columns)
+    print("Current obs keys:")
+    print(processed_data.obs.keys())
+    pd.set_option('display.max_rows', 10)
+    pd.set_option('display.max_columns', 10)
+
+    # Debugging information
+    print("Processed data observation data (first 100 rows):")
+    print(processed_data.obs.head(10))
+    
+    print("Processed data variable data (first 100 rows):")
+    print(processed_data.var.head(10))
+    processed_data.layers['counts'] = processed_data.X.copy()
+    sc.pp.normalize_total(processed_data, target_sum=1e4)
+    sc.pp.log1p(processed_data)
+    sc.tl.pca(processed_data, n_comps=50)
+    processed_data.raw = processed_data
+   
+
+    sc.pp.neighbors(processed_data, n_pcs=50, n_neighbors=15, use_rep='X')
+
+    sc.tl.leiden(processed_data, resolution=0.5)
+    
+    
+    
+    sc.tl.umap(processed_data)
+
+   
+    figures_path = 'media/figures'
+    if not os.path.exists(figures_path):
+        os.makedirs(figures_path)
+
+
+    umap_plot_path = os.path.join(figures_path, 'PanglaoDB_Umap.png')
+    sc.pl.umap(processed_data, color='leiden', show=False)
+    plt.savefig(umap_plot_path)
+    print(f"UMAP plot saved to {umap_plot_path}")
+    
+    # obs와 uns 데이터를 반환하여 프론트에서 설명으로 사용
+    return umap_plot_path, processed_data.obs, processed_data.uns

@@ -2,13 +2,15 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.http import urlencode
 
-from preprocessing.prepo import * 
+from preprocessing.proc import * 
 
 import interaction.forms as forms
 import search.marker_search as marker_search
 
 import os
 import preprocessing.umap as Umap
+
+import functions
 
 def only_render(request, html):
     return render(request, html)
@@ -127,12 +129,12 @@ def umap_view(request):
                 return render(request, 'umap.html', {
                     'user_umap_plot': user_umap_plot,
                     's3_umap_plot': None,
-                    's3_files': Umap.fetch_s3_folder_list(),
+                    's3_files': functions.load_singlecellportal_folder_list(),
                     'error_message': f"Error processing file: {str(e)}"
                 })
 
     # S3 파일 목록 가져오기
-    s3_files = Umap.fetch_s3_folder_list()
+    s3_files = functions.load_singlecellportal_folder_list()
 
     return render(request, 'umap.html', {
         'user_umap_plot': user_umap_plot,

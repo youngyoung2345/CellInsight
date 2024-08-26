@@ -10,20 +10,24 @@ Output:
 
 '''
 
-import scanpy
+import scanpy as sc
 from migrations import models
 
 def process_Single_Cell_Portal(file_path, data_type):
-    object = models.get_s3_objects('cellinsight-bucket', file_path)
+    # study 하나 통째로 받아오기 -> expression, cluster 따로따로
+    file_list = models.read_singlecellportal_from_s3('cellinsight-bucket', file_path)
 
-    match data_type:
-        case '10x_h5':
-            processed_data = scanpy.read_10x_h5(object)
-        case 'csv':
-            processed_data = scanpy.read_csv(object)
-        case '10x_mtx':
-            processed_data = scanpy.read_10x_mtx(object)
-        case _:
-            return False
+    # expression으로 anndata읽기
+    adata = file_list[0]['data']
+    
+    # cluster 정보 추가하기
+    clusters = file_list[1]['data']
+    
+    # 클러스터링 결과가 세포와 일치하는지 확인 (index가 동일한지 확인)
+    if not all(clusters.index == adata.obs.index):
+        raise ValueError("The index of cluster file and the index of adata.obs do not match.")
 
-    return processed_data
+    # 클러스터링 결과를 adata의 obs에 추가합니다.
+    adata.obs['cluster'] = clusters['cluster']
+
+    return adata
