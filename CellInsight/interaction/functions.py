@@ -2,13 +2,19 @@ import io
 import pandas as pd 
 
 from migrations import models
+from preprocessing import PanglaoDB_proc_python, Single_Cell_Portal_proc 
+
+def load_prefix_list(prefix, delimiter):
+    raw_prefix = models.list_s3_objects(models.bucket_name, Prefix = prefix, Delimiter = delimiter)
+    prefix_list = [prefix['Prefix'] for prefix in raw_prefix.get('CommonPrefixes', [])]
+
+    return prefix_list
 
 def load_singlecellportal_folder_list():
     raw_information = models.get_s3_object(models.bucket_name, 'singlecellportal/information.csv')
     information = pd.read_csv(io.BytesIO(raw_information))
 
-    raw_prefix = models.list_s3_objects(models.bucket_name, Prefix='singlecellportal/', Delimiter='/')
-    prefix_list = [prefix['Prefix'] for prefix in raw_prefix.get('CommonPrefixes', [])]
+    prefix_list = load_prefix_list('singlecellportal/', '/')
     
     name_mapping = dict(zip(information['B'], information['C']))
 
@@ -28,6 +34,6 @@ def load_cluster_file_list(folder_name):
     cluster_prefix = folder_name.rstrip('/') + '/cluster/'
 
     raw_prefix = models.list_s3_objects(models.bucket_name, cluster_prefix)
-    prefix = [item['Key'] for item in raw_prefix.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
+    prefix_list = [item['Key'] for item in raw_prefix.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
 
-    return prefix
+    return prefix_list

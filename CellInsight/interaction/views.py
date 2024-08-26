@@ -117,7 +117,7 @@ def umap_view(request):
         if folder_name:
             try:
                 # 클러스터 파일 가져오기 및 UMAP 생성
-                cluster_file2 = Umap.fetch_cluster_files(folder_name)
+                cluster_file2 = functions.load_cluster_file_list(folder_name)
                 
                 if cluster_file2:
                     # 선택된 클러스터 파일로 UMAP 생성

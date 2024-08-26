@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 def load_data(file_path, file_format):
     match file_format:
         case 'RData':
-            preprocessed_data = pdl.process_PanglaoDB(file_path)
+            preprocessed_data = pdl.make_anndata(file_path)
         case _:
             preprocessed_data = scp.process_Single_Cell_Portal(file_path, file_format)
 
@@ -28,6 +28,7 @@ def preprocess_data(preprocessed_data, min_counts, min_genes, max_genes, pct_cou
     sc.pp.filter_cells(preprocessed_data, min_counts=min_counts)
     sc.pp.filter_cells(preprocessed_data, min_genes=min_genes)
     sc.pp.filter_cells(preprocessed_data, max_genes=max_genes)
+    
     preprocessed_data = preprocessed_data[preprocessed_data.obs['pct_counts_mt'] < pct_counts_mt, :]
     preprocessed_data = preprocessed_data[preprocessed_data.obs['predicted_doublets'] == 'False', :]
 

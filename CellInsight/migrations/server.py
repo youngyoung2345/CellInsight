@@ -1,7 +1,10 @@
-import models
+import paramiko
+
+HOST = '211.188.54.91'  
+PORT = 22  
+USERNAME = 'root'  
+PASSWORD = 'qlalfqjsgh0112!' 
 
 def start_server():
-    return
 
-def stop_server():
-    return
+def end_server():

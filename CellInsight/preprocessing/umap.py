@@ -81,13 +81,6 @@ def fetch_and_process_file(cluster_files2, delimiter):
 
 
 
-def fetch_s3_folder_list_Panglao():
-    bucket_name='cellinsight-bucket'
-    prefix = 'PanglaoDB/'
-    response = models.list_s3_objects(bucket_name, prefix, delimiter=True)
-    folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
-    return folders
-
 def fetch_first_file_in_folder(folder_name):
     bucket_name = 'cellinsight-bucket'
     

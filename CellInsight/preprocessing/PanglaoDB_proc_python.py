@@ -116,3 +116,9 @@ def process_PanglaoDB(data_path, additional_data):
     processed_data = add_information(processed_data, additional_data)
     
     return processed_data
+
+def make_anndata(file_path):
+    additional_data = import_additional_data(file_path)
+    preprocessed_data = process_PanglaoDB(file_path, additional_data)
+
+    return preprocessed_data
