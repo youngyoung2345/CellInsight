@@ -19,7 +19,7 @@ def fetch_s3_folder_list():
         config=Config(signature_version='s3v4')
     )
 
-    response = s3_client.get_object(Bucket=bucket_name, Key='PanglaoDB/name/fourth_name.csv')
+    response = s3_client.get_object(Bucket=bucket_name, Key='singlecellportal/fourth_name.csv')
     content = response['Body'].read()
     excel_data = pd.read_csv(io.BytesIO(content))
     

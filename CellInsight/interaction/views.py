@@ -1,24 +1,17 @@
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.http import urlencode
-from preprocessing.prepo import preprocess_and_visualize
+
 import interaction.forms as forms
 import search.marker_search as marker_search
 import pandas as pd
 import os
-import preprocessing.Umap as Umap
+import preprocessing.umap as Umap
 import search.marker_search as marker_search
 import preprocessing.PanglaoDB_proc_python as PanglaoDB_proc_python
-
-def handle_uploaded_file(f):
-    media_path = 'media'
-    if not os.path.exists(media_path):
-        os.makedirs(media_path)
-    file_path = os.path.join(media_path, f.name)
-    with open(file_path, 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
-    return file_path
+from preprocessing.proc import * 
+def only_render(request, html):
+    return render(request, html)
 
 def preprocessing(request):
     if request.method == 'POST':
@@ -44,6 +37,16 @@ def preprocessing(request):
             'qc_form': qc_form
         })
 
+def handle_uploaded_file(f):
+    media_path = 'media'
+    if not os.path.exists(media_path):
+        os.makedirs(media_path)
+    file_path = os.path.join(media_path, f.name)
+    with open(file_path, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+    return file_path
+
 
 def qc_process(request):
     if request.method == 'POST':
@@ -57,8 +60,9 @@ def qc_process(request):
             max_genes = qc_form.cleaned_data['max_genes']
             pct_counts_mt = qc_form.cleaned_data['pct_counts_mt']
 
-            # Violin Plot만 생성
-            violin_plot, _ = preprocess_and_visualize(file_path, file_format, min_counts, min_genes, max_genes, pct_counts_mt)
+            data = load_data(file_path, file_format)
+            preprocessed_data = preprocess_data(data, min_counts, min_genes, max_genes, pct_counts_mt)
+            violin_plot = draw_and_save_violin_plot(preprocessed_data)
 
             return render(request, 'preprocessing.html', {
                 'violin_plot': violin_plot,
@@ -75,9 +79,6 @@ def qc_process(request):
 
     return HttpResponseRedirect('/preprocessing/')
 
-def welcome(request):
-    return render(request, 'welcome.html')
-
 def mapcell_process(request):
     if request.method == 'POST':
         file_path = request.POST.get('file_path')
@@ -88,7 +89,11 @@ def mapcell_process(request):
         pct_counts_mt = float(request.POST.get('pct_counts_mt'))
 
         # Normalization 및 UMAP Plot 생성
-        _, umap_plot = preprocess_and_visualize(file_path, file_format, min_counts, min_genes, max_genes, pct_counts_mt)
+
+        data = load_data(file_path, file_format)
+        preprocessed_data = preprocess_data(data, min_counts, min_genes, max_genes, pct_counts_mt)
+        normalized_data = normalize_data(preprocessed_data)
+        umap_plot = draw_and_save_umap_plot(normalized_data)
 
         # UMAP 플롯 페이지로 리디렉션
         umap_plot = umap_plot.replace('\\', '/')

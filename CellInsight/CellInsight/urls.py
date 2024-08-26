@@ -25,13 +25,13 @@ urlpatterns = [
    # path('upload/', views.upload_file, name='upload_file'),
    # path('success/', views.success, name='success'),
 
-    path('', views.welcome, name='welcome'),
+    path('', views.only_render,{'html': 'welcome.html'},name='welcome'),
     path('preprocessing/', views.preprocessing, name='preprocessing'),
     path('qc_process/', views.qc_process, name='qc_process'),
     path('mapcell_process/', views.mapcell_process, name='mapcell_process'),
     path('umap/', views.umap_view, name='umap_view'),
     path('markersearch/', views.markersearch, name='markersearch'), 
-    path('search/', views.search, name='search'),
+   path('search/', views.only_render, {'html': 'search.html'}, name='search'),
 ]
 
 if settings.DEBUG:
