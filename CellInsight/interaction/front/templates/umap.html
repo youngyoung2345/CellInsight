@@ -1,10 +1,6 @@
 <!-- umap.html -->
 {% extends 'base.html' %}
 
-{% block left_section %}
-    <a href="{% url 'preprocessing' %}">Back to Preprocessing</a>
-{% endblock %}
-
 {% block right_section %}
     <h2>UMAP Plots</h2>
     
@@ -38,7 +34,7 @@
         <br><br>
         <input type="submit" value="Generate UMAP">
     </form>
-
+    <div style="display: flex; align-items: flex-start;">
     <!-- 생성된 UMAP 및 관련 데이터 -->
     <h3>UMAP Plot</h3>
     {% if s3_umap_plot %}
@@ -49,28 +45,20 @@
         <p>No UMAP plot from selected file. Please select a file to generate UMAP.</p>
     {% endif %}
 
-    <!-- CSV 데이터 표시 -->
-    <h3>CSV Data</h3>
-    {% if csv_data %}
-        <table>
-            <thead>
-                <tr>
-                    {% for col in csv_data.0.keys %}
-                    <th>{{ col }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in csv_data %}
-                <tr>
-                    {% for value in row.values %}
-                    <td>{{ value }}</td>
-                    {% endfor %}
-                </tr>
+    <!-- UNS 데이터 표시 -->
+        <!-- UNS Data -->
+        <div style="width: 30%; margin-left: 20px;">
+            <h3>UNS Data</h3>
+            {% if uns_data %}
+                <ul>
+                {% for key, value in uns_data.items %}
+                    <li><strong>{{ key }}:</strong> {{ value }}</li>
                 {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No CSV data available for the selected file.</p>
-    {% endif %}
+                </ul>
+            {% else %}
+                <p>No UNS data available.</p>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}
+

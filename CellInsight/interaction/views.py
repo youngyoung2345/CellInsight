@@ -109,6 +109,7 @@ def umap_view(request):
     s3_umap_plot = None
     panglao_umap_plot = None
     csv_data = None  # 초기화
+    uns_data = None  # 초기화
     if request.method == 'POST':
         folder_name = request.POST.get('s3_file')
         delimiter = request.POST.get('delimiter', '\t')
@@ -135,7 +136,9 @@ def umap_view(request):
                     'panglao_umap_plot': None,
                     's3_files': Umap.fetch_s3_folder_list(),
                     'csv_data': csv_data,
+                    'uns_data': uns_data,
                     'error_message': f"Error processing file: {str(e)}"
+                    
                 })
 
     # S3 파일 목록 가져오기

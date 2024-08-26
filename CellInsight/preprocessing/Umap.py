@@ -216,13 +216,9 @@ def fetch_and_process_file_Panglao(folder_name):
         'primary_adult_tissue'
     ]
 
-    uns_keys_to_exclude = ['SRA', 'SRS', 'SRR', 'instrument']
+    uns_keys_to_remove = ['log1p', 'pca', 'neighbors', 'leiden', 'umap', 'leiden_colors']
 
-    # 제외할 열을 제거
-# 제외할 열을 제거
-# 제외할 열을 제거 (존재할 경우에만 제거)
- 
-
+    
     # 확인을 위한 출력
     print("Remaining uns keys:", processed_data.uns.keys())
     print("Remaining obs columns:", processed_data.obs.columns)
@@ -256,10 +252,14 @@ def fetch_and_process_file_Panglao(folder_name):
     figures_path = 'media/figures'
     if not os.path.exists(figures_path):
         os.makedirs(figures_path)
-
+    
 
     umap_plot_path = os.path.join(figures_path, 'PanglaoDB_Umap.png')
     sc.pl.umap(processed_data, color='leiden', show=False)
+    for key in uns_keys_to_remove:
+        if key in processed_data.uns:
+            print(f"Removing uns key: {key}")
+            processed_data.uns.pop(key)
     plt.savefig(umap_plot_path)
     print(f"UMAP plot saved to {umap_plot_path}")
     
