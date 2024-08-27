@@ -1,11 +1,4 @@
-import boto3
-from botocore.client import Config
-import pandas as pd
-import io
-import scanpy as sc
 import numpy as np
-
-from migrations import models
 
 bucket_name = ''
 file_key = ''
@@ -45,18 +38,3 @@ def count_clusters_with_gene(adata, gene_name, cluster_key='leiden', threshold=0
             count += len(unique_clusters)
             
     return count
-
-# get a file from database
-data = models.read_file_from_s3(bucket_name, prefix)
-
-#{'study' : study_name, 'sample' : sample_name, 'data_type' : data_type,'data': processed_data}
-
-# 모든 데이터들을 돌면서 gene이 있는지 확인 -> cell, cluster 개수 세기
-num_samples = 0
-num_clusters = 0
-for study in data:
-    adata = study['data']
-    if check_gene_presence(adata, gene_name) == True:
-        num_samples += 1
-    num_clusters += count_clusters_with_gene(adata, gene_name, cluster_key='leiden')
-    
