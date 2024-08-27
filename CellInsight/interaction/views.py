@@ -2,16 +2,14 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.http import urlencode
 
-from preprocessing.proc import * 
-
 import interaction.forms as forms
 import search.marker_search as marker_search
-
+import pandas as pd
 import os
 import preprocessing.umap as Umap
-
-import functions
-
+import search.marker_search as marker_search
+import preprocessing.PanglaoDB_proc_python as PanglaoDB_proc_python
+from preprocessing.proc import * 
 def only_render(request, html):
     return render(request, html)
 
@@ -109,37 +107,55 @@ def mapcell_process(request):
 def umap_view(request):
     user_umap_plot = request.GET.get('umap_plot')
     s3_umap_plot = None
-
+    panglao_umap_plot = None
+    csv_data = None  # 초기화
+    uns_data = None  # 초기화
     if request.method == 'POST':
         folder_name = request.POST.get('s3_file')
         delimiter = request.POST.get('delimiter', '\t')
 
         if folder_name:
             try:
-                # 클러스터 파일 가져오기 및 UMAP 생성
-                cluster_file2 = functions.load_cluster_file_list(folder_name)
-                
-                if cluster_file2:
-                    # 선택된 클러스터 파일로 UMAP 생성
-                    s3_umap_plot = Umap.fetch_and_process_file(cluster_file2, delimiter)
+                if 'PanglaoDB' in folder_name:
+                    # PanglaoDB 파일을 선택한 경우 처리
+                    panglao_umap_plot, obs_data, uns_data = Umap.fetch_and_process_file_Panglao(folder_name)
+                    csv_data = PanglaoDB_proc_python.import_additional_data(folder_name)
                 else:
-                    print("No cluster files found.")
+                    # Singlecellportal 파일을 선택한 경우 처리
+                    cluster_file2 = Umap.fetch_cluster_files(folder_name)
+                    
+                    if cluster_file2:
+                        s3_umap_plot = Umap.fetch_and_process_file(cluster_file2, delimiter)
+                    else:
+                        print("No cluster files found.")
             except Exception as e:
                 print(f"Error fetching and processing file {folder_name}: {str(e)}")
                 return render(request, 'umap.html', {
                     'user_umap_plot': user_umap_plot,
                     's3_umap_plot': None,
-                    's3_files': functions.load_singlecellportal_folder_list(),
+                    'panglao_umap_plot': None,
+                    's3_files': Umap.fetch_s3_folder_list(),
+                    'csv_data': csv_data,
+                    'uns_data': uns_data,
                     'error_message': f"Error processing file: {str(e)}"
+                    
                 })
 
     # S3 파일 목록 가져오기
-    s3_files = functions.load_singlecellportal_folder_list()
+    s3_files = Umap.fetch_s3_folder_list()
+    panglao_files = Umap.fetch_s3_folder_list_Panglao()
 
+    # singlecellportal 및 panglaoDB 파일들을 하나의 리스트로 합침
+    combined_files = s3_files + [(folder, folder) for folder in panglao_files]
+    csv_data_list = csv_data.to_dict(orient='records') if csv_data is not None else []
     return render(request, 'umap.html', {
         'user_umap_plot': user_umap_plot,
         's3_umap_plot': s3_umap_plot,
-        's3_files': s3_files,
+        'panglao_umap_plot': panglao_umap_plot,
+        's3_files': combined_files,  # 통합된 파일 리스트를 전달
+        'csv_data': csv_data_list,
+        'obs_data': obs_data if 'obs_data' in locals() else None,
+        'uns_data': uns_data if 'uns_data' in locals() else None,
     })
 
     
@@ -165,4 +181,5 @@ def markersearch(request):
         'html_code': html_code,
     })
 
-
+def search(request):
+    return render(request, 'search.html')

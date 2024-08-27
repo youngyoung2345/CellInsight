@@ -59,3 +59,4 @@ for study in data:
     if check_gene_presence(adata, gene_name) == True:
         num_samples += 1
     num_clusters += count_clusters_with_gene(adata, gene_name, cluster_key='leiden')
+    

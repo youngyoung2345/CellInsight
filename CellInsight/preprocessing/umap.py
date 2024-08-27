@@ -6,9 +6,70 @@ from botocore.client import Config
 import io
 import os
 import numpy as np
+import preprocessing.PanglaoDB_proc_python as PanglaoDB_proc_python
+import migrations.models as models
+def fetch_s3_folder_list():
+    bucket_name = 'cellinsight-bucket'
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id='',  
+        aws_secret_access_key='',
+        endpoint_url='https://kr.object.ncloudstorage.com',
+        region_name='kr-standard',
+        config=Config(signature_version='s3v4')
+    )
 
-from preprocessing import PanglaoDB_proc_python
-from migrations import models
+    response = s3_client.get_object(Bucket=bucket_name, Key='singlecellportal/fourth_name.csv')
+    content = response['Body'].read()
+    excel_data = pd.read_csv(io.BytesIO(content))
+    
+    # B열의 폴더 이름과 C열의 표시 이름 매핑
+    name_mapping = dict(zip(excel_data['B'], excel_data['C']))
+
+
+    # S3의 모든 폴더 목록 가져오기
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix='singlecellportal/', Delimiter='/')
+    
+    # 폴더 목록 추출
+    folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
+    
+    display_folders = []
+    for folder in folders:
+        folder_key = folder.split('/')[-2]  # 'singlecellportal/scp10/'에서 'scp10' 추출
+        if folder_key in name_mapping:
+            display_folders.append((folder, name_mapping[folder_key]))
+        else:
+            display_folders.append((folder, folder_key))  # 매핑이 없으면 폴더 이름 사용
+
+    return display_folders
+
+def fetch_cluster_files(folder_name):
+    bucket_name = 'cellinsight-bucket'
+    cluster_prefix = folder_name.rstrip('/') + '/cluster/'  # 클러스터 파일 경로
+
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id='',  
+        aws_secret_access_key='',  
+        endpoint_url='https://kr.object.ncloudstorage.com',
+        region_name='kr-standard',
+        config=Config(signature_version='s3v4')
+    )
+
+    # 선택된 폴더의 cluster 디렉토리 내의 파일 목록 가져오기
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=cluster_prefix)
+    cluster_files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
+
+    # cluster_prefix 콘솔에 출력
+    print(f"Cluster Prefix: {cluster_prefix}")
+ # cluster_prefix 및 cluster_files 콘솔에 출력
+    print(f"Cluster Files: {cluster_files}")
+    # 파일이 없을 경우 경고 출력
+    if not cluster_files:
+        print(f"No cluster files found in {cluster_prefix}")
+    cluster_files2 = cluster_files[0]
+    print(f"Cluster Files2: {cluster_files2}")
+    return cluster_files2
 
 
 def fetch_and_process_file(cluster_files2, delimiter):
@@ -81,6 +142,13 @@ def fetch_and_process_file(cluster_files2, delimiter):
 
 
 
+def fetch_s3_folder_list_Panglao():
+    bucket_name='cellinsight-bucket'
+    prefix = 'PanglaoDB/'
+    response = models.list_s3_objects(bucket_name, prefix, delimiter=True)
+    folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
+    return folders
+
 def fetch_first_file_in_folder(folder_name):
     bucket_name = 'cellinsight-bucket'
     
@@ -148,13 +216,9 @@ def fetch_and_process_file_Panglao(folder_name):
         'primary_adult_tissue'
     ]
 
-    uns_keys_to_exclude = ['SRA', 'SRS', 'SRR', 'instrument']
+    uns_keys_to_remove = ['log1p', 'pca', 'neighbors', 'leiden', 'umap', 'leiden_colors']
 
-    # 제외할 열을 제거
-# 제외할 열을 제거
-# 제외할 열을 제거 (존재할 경우에만 제거)
- 
-
+    
     # 확인을 위한 출력
     print("Remaining uns keys:", processed_data.uns.keys())
     print("Remaining obs columns:", processed_data.obs.columns)
@@ -188,10 +252,14 @@ def fetch_and_process_file_Panglao(folder_name):
     figures_path = 'media/figures'
     if not os.path.exists(figures_path):
         os.makedirs(figures_path)
-
+    
 
     umap_plot_path = os.path.join(figures_path, 'PanglaoDB_Umap.png')
     sc.pl.umap(processed_data, color='leiden', show=False)
+    for key in uns_keys_to_remove:
+        if key in processed_data.uns:
+            print(f"Removing uns key: {key}")
+            processed_data.uns.pop(key)
     plt.savefig(umap_plot_path)
     print(f"UMAP plot saved to {umap_plot_path}")
     

@@ -1,3 +1,2 @@
 from django import HttpRequest
 
-

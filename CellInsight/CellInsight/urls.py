@@ -26,14 +26,13 @@ urlpatterns = [
    # path('success/', views.success, name='success'),
 
     path('', views.only_render,{'html': 'welcome.html'},name='welcome'),
-    path('search/', views.only_render, {'html': 'search.html'}, name='search'),
     path('preprocessing/', views.preprocessing, name='preprocessing'),
     path('qc_process/', views.qc_process, name='qc_process'),
     path('mapcell_process/', views.mapcell_process, name='mapcell_process'),
     path('umap/', views.umap_view, name='umap_view'),
     path('markersearch/', views.markersearch, name='markersearch'), 
+   path('search/', views.only_render, {'html': 'search.html'}, name='search'),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

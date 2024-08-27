@@ -11,6 +11,7 @@ import gzip
 import pandas as pd
 import scanpy as sc
 import os
+import h5py
 
 bucket_name='cellinsight-bucket'
 
@@ -79,6 +80,7 @@ def read_h5ad(file_data):
         return data
     
 def read_scp_cluster(file_data):
+    
     # 파일의 첫 1024 바이트를 읽어서 파일 형식을 판별합니다.
     file_snippet = file_data.read(1024).decode('utf-8')
     file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
@@ -94,19 +96,24 @@ def read_scp_cluster(file_data):
     return df   
 
 def read_scp_exp(file_data):
-    # 파일의 첫 1024 바이트를 읽어서 파일 형식을 판별합니다.
-    file_snippet = file_data.read(1024).decode('utf-8')
+
+    file_snippet = file_data.read(4)
     file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
     
     # h5 또는 h5ad 파일인 경우 처리
-    if file_snippet.startswith('\x89HDF'):
-        # HDF5 파일 식별자로 시작하는지 확인
-        if file_snippet.find('10X') != -1:
-            # 파일이 10X Genomics 형식인 경우
-            return sc.read_10x_h5(file_data)
-        else:
-            # 일반적인 HDF5 파일 (h5ad)로 처리
-            return sc.read_h5ad(file_data)
+    # h5 또는 h5ad 파일인 경우 처리 (HDF5 파일은 0x89로 시작)
+    # h5 또는 h5ad 파일인 경우 처리
+    if file_snippet == b'\x89HDF':
+        try:
+            with h5py.File(file_data, 'r') as f:
+                # H5 파일이 h5ad 또는 10X Genomics 형식인지 확인합니다.
+                if 'matrix' in f.keys() or 'X' in f.keys():
+                    return sc.read_10x_h5(file_data)
+                else:
+                    return sc.read_h5ad(file_data)
+        except Exception as e:
+            print(f"Error reading h5/h5ad file: {e}")
+            raise
 
     # 파일 확장자에 따라 적절한 구분자 설정
     if '.tsv' in file_snippet or '\t' in file_snippet:

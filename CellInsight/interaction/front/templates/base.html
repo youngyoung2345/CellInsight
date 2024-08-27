@@ -1,27 +1,16 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>CellInsight</title>
-    <style>
-        .container {
-            display: flex;
-        }
-        .section {
-            flex: 1;
-            padding: 20px;
-        }
-        .left-section {
-            width: 300px;
-            flex: none;
-            border-right: 1px solid #ddd;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/welcome_style.css' %}">
 </head>
 <body>
     <header>
         <h1>Welcome to CellInsight</h1>
         <nav>
-            
+            <!-- 웰컴 페이지로 돌아가는 링크 추가 -->
+            <a href="{% url 'welcome' %}" class="back-link">Back to Welcome Page</a>
         </nav>
     </header>
     <div class="container">
