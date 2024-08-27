@@ -1,6 +1,12 @@
 <!-- umap.html -->
 {% extends 'base.html' %}
-
+{% block left_section %}
+    <h2>Navigation</h2>
+    <ul>
+        <li><a href="{% url 'welcome' %}">Back to Welcome Page</a></li>
+        <!-- 다른 탐색 링크들을 여기에 추가할 수 있습니다. -->
+    </ul>
+{% endblock %}
 {% block right_section %}
     <h2>UMAP Plots</h2>
     
@@ -15,17 +21,26 @@
     <hr>
 
     <!-- S3 및 PanglaoDB 파일 선택 섹션 -->
-    <h3>Select a File from S3 or PanglaoDB</h3>
+    <h3>Reference Umap</h3>
     <form method="POST">
         {% csrf_token %}
-        <label for="s3_file">Choose a file:</label>
-        <select id="s3_file" name="s3_file" required>
-            <option value="" disabled selected>Select a file</option>
-            {% for folder, display_name in s3_files %}
-            <option value="{{ folder }}">{{ display_name }}</option>
-            {% endfor %}
-        </select>
-        <br><br>
+        <!-- Search for a file 입력란 -->
+        <div style="margin-bottom: 10px;">
+            <label for="file_search">Search for a file:</label>
+            <input type="text" id="file_search" onkeyup="filterFiles()" placeholder="Search for files..." style="width: 100%;">
+        </div>
+        
+        <!-- Choose a file 드롭다운 -->
+        <div style="margin-bottom: 10px;">
+            <label for="s3_file">Choose a file:</label>
+            <select id="s3_file" name="s3_file" required size="10" style="width: 100%;">
+                {% for folder, display_name in s3_files %}
+                <option value="{{ folder }}">{{ display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Delimiter 선택 -->
         <label for="delimiter">Choose delimiter:</label>
         <select id="delimiter" name="delimiter">
             <option value=",">Comma (,)</option>
@@ -34,19 +49,18 @@
         <br><br>
         <input type="submit" value="Generate UMAP">
     </form>
-    <div style="display: flex; align-items: flex-start;">
-    <!-- 생성된 UMAP 및 관련 데이터 -->
-    <h3>UMAP Plot</h3>
-    {% if s3_umap_plot %}
-        <img src="/{{ s3_umap_plot }}" alt="S3 UMAP Plot">
-    {% elif panglao_umap_plot %}
-        <img src="/{{ panglao_umap_plot }}" alt="PanglaoDB UMAP Plot">
-    {% else %}
-        <p>No UMAP plot from selected file. Please select a file to generate UMAP.</p>
-    {% endif %}
 
-    <!-- UNS 데이터 표시 -->
-        <!-- UNS Data -->
+    <!-- UMAP 및 관련 데이터 -->
+    <div style="display: flex; align-items: flex-start;">
+        <h3>UMAP Plot</h3>
+        {% if s3_umap_plot %}
+            <img src="/{{ s3_umap_plot }}" alt="S3 UMAP Plot">
+        {% elif panglao_umap_plot %}
+            <img src="/{{ panglao_umap_plot }}" alt="PanglaoDB UMAP Plot">
+        {% else %}
+            <p>No UMAP plot from selected file. Please select a file to generate UMAP.</p>
+        {% endif %}
+
         <div style="width: 30%; margin-left: 20px;">
             <h3>UNS Data</h3>
             {% if uns_data %}
@@ -60,5 +74,19 @@
             {% endif %}
         </div>
     </div>
-{% endblock %}
 
+    <script>
+        function filterFiles() {
+            const input = document.getElementById("file_search").value.toLowerCase();
+            const options = document.getElementById("s3_file").options;
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.text.toLowerCase().includes(input)) {
+                    option.style.display = "";
+                } else {
+                    option.style.display = "none";
+                }
+            }
+        }
+    </script>
+{% endblock %}

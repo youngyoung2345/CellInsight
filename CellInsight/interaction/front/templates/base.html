@@ -1,4 +1,4 @@
-{% load static %} 
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,7 +8,10 @@
 <body>
     <header>
         <h1>Welcome to CellInsight</h1>
-        <nav></nav>
+        <nav>
+            <!-- 웰컴 페이지로 돌아가는 링크 추가 -->
+            <a href="{% url 'welcome' %}" class="back-link">Back to Welcome Page</a>
+        </nav>
     </header>
     <div class="container">
         <div class="section left-section">
