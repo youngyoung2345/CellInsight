@@ -190,48 +190,58 @@ import search.gene_search as gene_search
 from preprocessing import PanglaoDB_proc_python as pdl
 from preprocessing import Single_Cell_Portal_proc as scp
 from migrations import models
-
+from anndata import AnnData 
 def genesearch(request):
     if request.method == 'POST':
-        gene_name = request.POST.get('gene_name')
-        
-        # 초기화
-        num_samples = 0
-        num_clusters = 0
-        study_list = []  # study_list를 빈 리스트로 초기화
-        # PanglaoDB 데이터셋 검색
-        response = models.list_s3_objects('cellinsight-bucket', 'PanglaoDB/', delimiter=True)
-        if response and 'CommonPrefixes' in response:
-            study_list = [prefix['Prefix'] for prefix in response['CommonPrefixes']]
-        
-        for study in study_list:
-            response_files = models.list_s3_objects('cellinsight-bucket', study, delimiter=True)
-            if response_files and 'CommonPrefixes' in response_files:
-                study_file_list = [prefix['Prefix'] for prefix in response_files['CommonPrefixes']]
-                
-            for file in study_file_list:
-                panglao_data = pdl.make_anndata(file)
-                if gene_search.check_gene_presence(panglao_data, gene_name):
-                    num_samples += 1
-                num_clusters += gene_search.count_clusters_with_gene(panglao_data, gene_name, cluster_key='leiden')
-        
-        # SingleCellPortal 데이터셋 검색
-        response = models.list_s3_objects('cellinsight-bucket', 'singlecellportal/', delimiter=True)
-        if response and 'CommonPrefixes' in response:
-            study_list = [prefix['Prefix'] for prefix in response['CommonPrefixes']]
+        form = forms.GeneSearchForm(request.POST)
+        if form.is_valid():
+            gene_name = form.cleaned_data['gene_name']
             
-        for study in study_list:
-            scp_data = scp.process_Single_Cell_Portal(study)
-            if gene_search.check_gene_presence(scp_data, gene_name):
-                num_samples += 1
-            num_clusters += gene_search.count_clusters_with_gene(scp_data, gene_name, cluster_key='leiden')
-        
-        # 검색 결과를 템플릿에 전달하여 렌더링
-        context = {
-            'gene_name': gene_name,
-            'num_samples': num_samples,
-            'num_clusters': num_clusters
-        }
-        return render(request, 'genesearch_result.html', context)
-    
-    return render(request, 'genesearch.html')
+            # 초기화
+            num_samples = 0
+            num_clusters = 0
+            study_list = []
+
+            # PanglaoDB 데이터셋 검색
+            response = models.list_s3_objects('cellinsight-bucket', 'PanglaoDB/', delimiter=True)
+            if response and 'CommonPrefixes' in response:
+                study_list = [prefix['Prefix'] for prefix in response['CommonPrefixes']]
+            
+            for study in study_list:
+                response_files = models.list_s3_objects('cellinsight-bucket', study, delimiter=True)
+                study_file_list = []  # study_file_list 초기화
+                if response_files and 'CommonPrefixes' in response_files:
+                    study_file_list = [prefix['Prefix'] for prefix in response_files['CommonPrefixes']]
+                    
+                for file in study_file_list:
+                    panglao_data = pdl.make_anndata(file)
+                    if gene_search.check_gene_presence(panglao_data, gene_name):
+                        num_samples += 1
+                    num_clusters += gene_search.count_clusters_with_gene(panglao_data, gene_name, cluster_key='leiden')
+            
+            # SingleCellPortal 데이터셋 검색
+            response = models.list_s3_objects('cellinsight-bucket', 'singlecellportal/', delimiter=True)
+            if response and 'CommonPrefixes' in response:
+                study_list = [prefix['Prefix'] for prefix in response['CommonPrefixes']]
+                
+            for study in study_list:
+                scp_data = scp.process_Single_Cell_Portal(study)
+                            # 추가된 부분: DataFrame을 AnnData로 변환
+                if isinstance(scp_data, pd.DataFrame):
+                    scp_data = AnnData(X=scp_data.values, var=pd.DataFrame(index=scp_data.columns))
+
+                if gene_search.check_gene_presence(scp_data, gene_name):
+                    num_samples += 1
+                num_clusters += gene_search.count_clusters_with_gene(scp_data, gene_name, cluster_key='leiden')
+            
+            # 검색 결과를 템플릿에 전달하여 렌더링
+            context = {
+                'gene_name': gene_name,
+                'num_samples': num_samples,
+                'num_clusters': num_clusters
+            }
+            return render(request, 'genesearch_result.html', context)
+    else:
+        form = forms.GeneSearchForm()
+
+    return render(request, 'genesearch.html', {'form': form})

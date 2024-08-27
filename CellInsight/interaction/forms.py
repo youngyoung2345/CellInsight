@@ -10,3 +10,6 @@ class QCForm(forms.Form):
     min_genes = forms.IntegerField(label='Min Genes', initial=500)
     max_genes = forms.IntegerField(label='Max Genes', initial=7000)
     pct_counts_mt = forms.FloatField(label='Pct Counts MT', initial=20.0)
+
+class GeneSearchForm(forms.Form):
+    gene_name = forms.CharField(label='Gene Name', max_length=100, required=True)
