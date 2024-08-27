@@ -1,0 +1,76 @@
+<!-- umap.html -->
+{% extends 'base.html' %}
+
+{% block left_section %}
+    <a href="{% url 'preprocessing' %}">Back to Preprocessing</a>
+{% endblock %}
+
+{% block right_section %}
+    <h2>UMAP Plots</h2>
+    
+    <!-- 사용자 파일로 생성된 UMAP -->
+    <h3>Your UMAP Plot</h3>
+    {% if user_umap_plot %}
+        <img src="/{{ user_umap_plot }}" alt="User UMAP Plot">
+    {% else %}
+        <p>No UMAP plot from your uploaded file. Please upload a file to generate UMAP.</p>
+    {% endif %}
+    
+    <hr>
+
+    <!-- S3 및 PanglaoDB 파일 선택 섹션 -->
+    <h3>Select a File from S3 or PanglaoDB</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="s3_file">Choose a file:</label>
+        <select id="s3_file" name="s3_file" required>
+            <option value="" disabled selected>Select a file</option>
+            {% for folder, display_name in s3_files %}
+            <option value="{{ folder }}">{{ display_name }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <label for="delimiter">Choose delimiter:</label>
+        <select id="delimiter" name="delimiter">
+            <option value=",">Comma (,)</option>
+            <option value="\t">Tab (\t)</option>
+        </select>
+        <br><br>
+        <input type="submit" value="Generate UMAP">
+    </form>
+
+    <!-- 생성된 UMAP 및 관련 데이터 -->
+    <h3>UMAP Plot</h3>
+    {% if s3_umap_plot %}
+        <img src="/{{ s3_umap_plot }}" alt="S3 UMAP Plot">
+    {% elif panglao_umap_plot %}
+        <img src="/{{ panglao_umap_plot }}" alt="PanglaoDB UMAP Plot">
+    {% else %}
+        <p>No UMAP plot from selected file. Please select a file to generate UMAP.</p>
+    {% endif %}
+
+    <!-- CSV 데이터 표시 -->
+    <h3>CSV Data</h3>
+    {% if csv_data %}
+        <table>
+            <thead>
+                <tr>
+                    {% for col in csv_data.0.keys %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in csv_data %}
+                <tr>
+                    {% for value in row.values %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No CSV data available for the selected file.</p>
+    {% endif %}
+{% endblock %}
