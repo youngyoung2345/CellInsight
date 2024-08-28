@@ -10,10 +10,10 @@ Output:
 
 '''
 
-import scanpy as sc
-from migrations import models
 import os
-import numpy as np
+import scanpy as sc
+
+from migrations import models
 
 def process_Single_Cell_Portal(file_path):
     # study 하나 통째로 받아오기 -> expression, cluster 따로따로
@@ -50,6 +50,7 @@ def process_Single_Cell_Portal(file_path):
             continue
         
     return adata_list
+
 def process_user(data_file):
     file_extension = os.path.splitext(data_file)[1].lower()
     

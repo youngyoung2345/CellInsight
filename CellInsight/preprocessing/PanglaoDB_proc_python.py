@@ -1,83 +1,91 @@
-'''
-
-Process data from the PanglaoDB
-
-Input:
- - data_file: data from the PanglaoDB in RData format
-
-Output:
- - processed_data: processed data in seurat object format
-
-'''
 import io
+import os
+
 import anndata
 import numpy as np
-import rpy2.robjects as ro
-from rpy2.robjects import pandas2ri
 import pandas as pd
-import os
+
 import scipy.sparse as sp
-#from search import study_search
-from migrations import models
+import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri, conversion, default_converter
+
+from migrations import models
+
 pandas2ri.activate()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 r_script_path = os.path.join(script_dir, 'PanglaoDB_proc_R.R')
 
-def import_additional_data(data_path):
-    '''
-    data_path : EX) PanglaoDB/SRA621638/SRA621638_SRS2610285.sparse.RData
-    '''
-    
-     # 경로에서 필요한 부분만 추출
-    parts = data_path.split('/')
-    sra_id = parts[1]  # 예: SRA621638
-    csv_path = f'PanglaoDB/{sra_id}/{sra_id}_data.csv'  # 올바른 경로로 변경
-    
-    print(f"Attempting to fetch data from S3 with path: {csv_path}")
-    try:
-        # S3에서 CSV 파일 데이터를 가져옴
-        unprocessed_data = models.get_s3_objects('cellinsight-bucket', csv_path)
-        if unprocessed_data is None:
-            raise ValueError(f"Failed to fetch CSV data from S3: {csv_path}")
-        
-        # 데이터를 판다스 데이터프레임으로 변환
-        csv = pd.read_csv(io.StringIO(unprocessed_data.decode('utf-8')))
-        
-        print(f"Data fetched successfully. Size: {len(unprocessed_data)} bytes")
-        
-    except Exception as e:
-        print(f"Error fetching CSV data from S3: {str(e)}")
-        return None  # 오류 발생 시 None 반환
-    #EX) SRA621638_SRS2610285.sparse.RData -> SRA621638_SRS2610285
-     # SRA 변수 초기화
-    SRA = None
-    SRS = None
-
-    data_name = (parts[2].split('.'))[0] 
-    
-    if '_' in data_name:  # 언더스코어가 있는지 확인
-        try:
-            SRA, SRS = data_name.split('_', 1)  # 최대 두 부분으로 나누기
-            return csv[(csv['SRA'] == SRA) & (csv['SRS'] == SRS)]
-        except ValueError:
-            print(f"Error splitting data_name: {data_name}")
-            return None
-    else:
-        SRA = data_name
-        return csv[csv['SRA'] == SRA]
+uns_keys = {
+    'species__ontology_label': 'Species',
+    'library_preparation_protocol__ontology_label': 'Protocol',
+    'organ__ontology_label': 'Tissue',
+    'tumor': 'Tumor',
+    'cell_line': 'Cell line',
+    'primary_adult_tissue': 'Primary adult tissue',
+    'Number of clusters': 'Number of clusters',
+    'SRA': 'SRA',
+    'SRS': 'SRS',
+    'SRR': 'SRR',
+    'instrument': 'Instrument'
+}
 
 def get_first_value(series):
         return series.values[0] if not pd.isna(series).all() else pd.NA 
 
+def set_uns_value(processed_data, key, data, column_name):
+    processed_data.uns[key] = get_first_value(data.get(column_name, pd.Series([pd.NA])))
+
+def import_additional_data(data_path):
+    '''
+    parameter
+
+    data_path : EX) PanglaoDB/SRA621638/SRA621638_SRS2610285.sparse.RData
+
+    - load additional data of a file of PanglaoDB
+    
+    '''
+    
+    # Extract study name
+    # EX : PanglaoDB/SRA621638/SRA621638_SRS2610285.sparse.RData -> SRA621638
+
+    parts = data_path.split('/')
+    sra_id = parts[1]
+    csv_path = f'PanglaoDB/{sra_id}/{sra_id}_data.csv'  
+
+    unprocessed_data = models.get_s3_objects(models.bucket_name, csv_path)
+    
+    if unprocessed_data is None:
+        return None
+    
+    csv = pd.read_csv(io.StringIO(unprocessed_data.decode('utf-8')))
+
+    # Extract file name 
+    # EX : SRA621638_SRS2610285.sparse.RData -> SRA621638_SRS2610285
+
+    SRA, SRS = None, None
+    file_name = (parts[2].split('.'))[0] 
+    
+    if '_' in file_name: 
+        # EX : SRA621638_SRS2610285
+        SRA, SRS = file_name.split('_', 1)      
+        return csv[(csv['SRA'] == SRA) & (csv['SRS'] == SRS)]
+
+    else:
+        # EX : SRA621638
+        SRA = file_name
+        return csv[csv['SRA'] == SRA]
+    
 def process_PanglaoDB(data_path, additional_data):
     '''
+    parameter
+
     data_path : EX) cellinsight-bucket/PanglaoDB/SRA203368/PanglaoDB/SRA203368_SRS866906.sparse.RData
     additional_data : list consisting of SRA, SRS, SRR, Species, Tumor, Protocol, Instrument, Full-length mRNA-seq, Number of cells,
                       Number of exp. genes, Number of clusters, Tissue, Cell line (Y/N), Primary adult tissue (Y/N), and Target cell population
     
     '''
+
     with conversion.localconverter(default_converter):
         pandas2ri.activate()
 
@@ -116,19 +124,10 @@ def process_PanglaoDB(data_path, additional_data):
             processed_data.obs['cell_ids'] = col_data_df
             processed_data.var['gene_ids'] = row_data_df
     
-    # 데이터를 처리하여 uns에 추가
-    processed_data.uns['species__ontology_label'] = get_first_value(additional_data['Species'])
-    processed_data.uns['library_preparation_protocol__ontology_label'] = get_first_value(additional_data['Protocol'])
-    processed_data.uns['organ__ontology_label'] = get_first_value(additional_data['Tissue'])
-    processed_data.uns['tumor'] = get_first_value(additional_data.get('Tumor', pd.Series([pd.NA])))
-    processed_data.uns['cell_line'] = get_first_value(additional_data.get('Cell line', pd.Series([pd.NA])))
-    processed_data.uns['primary_adult_tissue'] = get_first_value(additional_data.get('Primary adult tissue', pd.Series([pd.NA])))
-    processed_data.uns['Number of clusters'] = get_first_value(additional_data.get('Number of clusters', pd.Series([pd.NA])))
+    # add additional data to processed data
 
-    processed_data.uns['SRA'] = get_first_value(additional_data.get('SRA', pd.Series([pd.NA])))
-    processed_data.uns['SRS'] = get_first_value(additional_data.get('SRS', pd.Series([pd.NA])))
-    processed_data.uns['SRR'] = get_first_value(additional_data.get('SRR', pd.Series([pd.NA])))
-    processed_data.uns['instrument'] = get_first_value(additional_data.get('Instrument', pd.Series([pd.NA])))
+    for key, value in uns_keys.items():
+        set_uns_value(processed_data, key, additional_data, value)
 
     return processed_data
 

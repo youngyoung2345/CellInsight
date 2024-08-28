@@ -1,12 +1,14 @@
+import io
+import os
 
 import pandas as pd
 import scanpy as sc
 import matplotlib.pyplot as plt
 
-import io
-import os
-import preprocessing.PanglaoDB_proc_python as PanglaoDB_proc_python
+from interaction.functions import load_1st_file 
 import migrations.models as models
+import preprocessing.PanglaoDB_proc_python as PanglaoDB_proc_python
+
 
 def fetch_and_process_file(cluster_files2, delimiter):
     try:
@@ -66,26 +68,9 @@ def fetch_and_process_file(cluster_files2, delimiter):
     return umap_plot_path
 
 
-def fetch_first_file_in_folder(folder_name):
-    bucket_name = 'cellinsight-bucket'
-    
-
-    # 선택된 폴더 내 첫 번째 파일 가져오기
-    response =  models.list_s3_objects(bucket_name, folder_name)
-    files_in_folder = response.get('Contents', [])
-
-    if not files_in_folder:
-        print(f"No files found in {folder_name}")
-        return None
-    
-    first_file_key = files_in_folder[0]['Key']
-    print('first_file_key',first_file_key)
-    return first_file_key
-
-
 def fetch_and_process_file_Panglao(folder_name):
     # 선택된 폴더에서 첫 번째 파일 가져오기
-    first_file_key = fetch_first_file_in_folder(folder_name)
+    first_file_key = load_1st_file(folder_name)
     if not first_file_key:
         return None, None, None
     print('first_file_key2',first_file_key)

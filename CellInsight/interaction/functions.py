@@ -34,3 +34,12 @@ def load_cluster_file_list(folder_name):
     prefix_list = [item['Key'] for item in raw_prefix.get('Contents', []) if item['Key'].endswith(('.csv', '.tsv', '.txt'))]
 
     return prefix_list
+
+def load_1st_file(folder_name):
+    response = models.list_s3_objects(bucket_name = models.bucket_name, prefix = folder_name)
+    file_list = response.get('Contents', [])
+
+    if not file_list:
+        return None
+    else:
+        return file_list[0]['Key']

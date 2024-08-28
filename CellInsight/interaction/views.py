@@ -5,8 +5,9 @@ from django.utils.http import urlencode
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 
-import preprocessing.PanglaoDB_proc_python as PanglaoDB_proc_python
 import preprocessing.umap as umap
+from preprocessing import PanglaoDB_proc_python as pdl
+from preprocessing import Single_Cell_Portal_proc as scp
 from preprocessing.preproc import *
 from processing.proc import *
 
@@ -19,6 +20,9 @@ from . import functions
 
 def only_render(request, html):
     return render(request, html)
+
+def search(request):
+    return render(request, 'search.html')
 
 def preprocessing(request):
     if request.method == 'POST':
@@ -120,15 +124,17 @@ def umap_view(request):
     if request.method == 'POST':
         folder_name = request.POST.get('s3_file')
         delimiter = request.POST.get('delimiter', '\t')
-        print(folder_name)
+
         if folder_name:
             try:
-                if 'PanglaoDB' in folder_name:
-                    # PanglaoDB 파일을 선택한 경우 처리
+                if 'PanglaoDB' in folder_name: 
+                    #Select study of PanglaoDB
+
                     panglao_umap_plot, obs_data, uns_data = umap.fetch_and_process_file_Panglao(folder_name)
-                    csv_data = PanglaoDB_proc_python.import_additional_data(folder_name)
-                else:
-                    # Singlecellportal 파일을 선택한 경우 처리
+                    csv_data = pdl.import_additional_data(folder_name)
+                else: 
+                    #Select study of Singlecellportal
+
                     prefix_list = functions.load_cluster_file_list(folder_name)
                     cluster_file = prefix_list[0]
                     
@@ -157,6 +163,7 @@ def umap_view(request):
     # singlecellportal 및 panglaoDB 파일들을 하나의 리스트로 합침
     combined_files = mapping + [(folder, folder) for folder in PanglaoDB_files]
     csv_data_list = csv_data.to_dict(orient='records') if csv_data is not None else []
+    
     return render(request, 'umap.html', {
         'user_umap_plot': user_umap_plot,
         's3_umap_plot': s3_umap_plot,
@@ -190,15 +197,9 @@ def markersearch(request):
         'html_code': html_code,
     })
 
-def search(request):
-    return render(request, 'search.html')
-
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from preprocessing import PanglaoDB_proc_python as pdl
-from preprocessing import Single_Cell_Portal_proc as scp
-from migrations import models
 from anndata import AnnData 
+
+from migrations import models
 
 def genesearch(request):
     if request.method == 'POST':

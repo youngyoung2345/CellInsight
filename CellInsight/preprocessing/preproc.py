@@ -1,12 +1,8 @@
-import matplotlib
 import scanpy as sc
 import scrublet as scr
-import matplotlib.pyplot as plt
 
 from . import PanglaoDB_proc_python as pdl
 from . import Single_Cell_Portal_proc as scp
-
-matplotlib.use('Agg')
 
 def load_data(file_path, file_format):
     match file_format:

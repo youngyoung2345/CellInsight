@@ -2,16 +2,16 @@ import boto3
 from botocore.client import Config
 
 import io
+import os
+
+import gzip
+import h5py
 import anndata
+import pandas as pd
+import scanpy as sc
 
 from rpy2 import robjects
 from rpy2.robjects.packages import importr
-
-import gzip
-import pandas as pd
-import scanpy as sc
-import os
-import h5py
 
 bucket_name='cellinsight-bucket'
 
@@ -19,8 +19,8 @@ bucket_name='cellinsight-bucket'
 
 s3_resource = boto3.resource(
     's3',
-    aws_access_key_id='ncp_iam_BPAMKR41rXZKCUkIZZYV',  
-    aws_secret_access_key='ncp_iam_BPKMKR5NPgXHyjBI5xuFQbSUSUsYydEMj3',  
+    aws_access_key_id='ncp_iam_BPAMKReLJZ3fuNmx3IhL',  
+    aws_secret_access_key='ncp_iam_BPKMKRR88ZNC5xBp18ERDEbDcfPdUofWtV',  
     endpoint_url='https://kr.object.ncloudstorage.com',
     region_name = 'kr-standard',
     config=Config(signature_version='s3v4')
@@ -30,8 +30,8 @@ s3_resource = boto3.resource(
 
 s3_client = boto3.client(
     's3',
-    aws_access_key_id='ncp_iam_BPAMKR41rXZKCUkIZZYV',  
-    aws_secret_access_key='ncp_iam_BPKMKR5NPgXHyjBI5xuFQbSUSUsYydEMj3',  
+    aws_access_key_id='ncp_iam_BPAMKReLJZ3fuNmx3IhL',  
+    aws_secret_access_key='ncp_iam_BPKMKRR88ZNC5xBp18ERDEbDcfPdUofWtV',  
     endpoint_url='https://kr.object.ncloudstorage.com',
     region_name = 'kr-standard',
     config=Config(signature_version='s3v4')
