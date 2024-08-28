@@ -197,7 +197,6 @@ def markersearch(request):
         'html_code': html_code,
     })
 
-from anndata import AnnData 
 
 from migrations import models
 
@@ -211,6 +210,7 @@ def genesearch(request):
             num_samples = 0
             num_clusters = 0
             study_list = []
+            gene_existing_study_list = []
 
             # PanglaoDB 데이터셋 검색
             response = models.list_s3_objects('cellinsight-bucket', 'PanglaoDB/', delimiter=True)
@@ -227,28 +227,57 @@ def genesearch(request):
                     panglao_data = pdl.make_anndata(file)
                     if gene_search.check_gene_presence(panglao_data, gene_name):
                         num_samples += 1
-                    num_clusters += gene_search.count_clusters_with_gene(panglao_data, gene_name, cluster_key='leiden')
+                        # study 이름이 이미 리스트에 없으면 추가
+                        if study not in gene_existing_study_list:
+                            gene_existing_study_list.append(study)
+                    
+                    '''
+                    # 클러스터 수를 얻어오고, 정수인지 확인한 후에 num_clusters에 더하기
+                    cluster_count = gene_search.count_clusters_with_gene(adata, gene_name, cluster_key='leiden')
+    
+                    if isinstance(cluster_count, int):  # 클러스터 수가 정수일 경우
+                        num_clusters += cluster_count
+                    '''
             
             # SingleCellPortal 데이터셋 검색
-            response = models.list_s3_objects('cellinsight-bucket', 'singlecellportal/', delimiter=True)
+            response = models.list_s3_objects('cellinsight-bucket', 'singlecellportal_anndata/', delimiter=True)
             if response and 'CommonPrefixes' in response:
                 study_list = [prefix['Prefix'] for prefix in response['CommonPrefixes']]
                 
+            print('study_list:', study_list)
+            
             for study in study_list:
-                scp_data = scp.process_Single_Cell_Portal(study)
-                            # 추가된 부분: DataFrame을 AnnData로 변환
-                if isinstance(scp_data, pd.DataFrame):
-                    scp_data = AnnData(X=scp_data.values, var=pd.DataFrame(index=scp_data.columns))
-
-                if gene_search.check_gene_presence(scp_data, gene_name):
-                    num_samples += 1
-                num_clusters += gene_search.count_clusters_with_gene(scp_data, gene_name, cluster_key='leiden')
+                h5ad_files = models.get_h5ad_files_from_study(study)
+                print('h5ad_files:', h5ad_files)
+                for h5ad in h5ad_files:
+                    try:
+                        # anndata 파일 로드
+                        if os.path.exists(h5ad) and h5ad.endswith('.h5ad'):
+                            adata = sc.read_h5ad(h5ad)
+                            
+                            if gene_search.check_gene_presence(adata, gene_name):
+                                num_samples += 1
+                                # study 이름이 이미 리스트에 없으면 추가
+                                if study not in gene_existing_study_list:
+                                    gene_existing_study_list.append(study)
+                    except (OSError, IOError) as e:
+                        print(f"Error reading {h5ad}: {e}")
+                        continue
+                    
+                    '''
+                    # 클러스터 수를 얻어오고, 정수인지 확인한 후에 num_clusters에 더하기
+                    cluster_count = gene_search.count_clusters_with_gene(adata, gene_name, cluster_key='leiden')
+    
+                    if isinstance(cluster_count, int):  # 클러스터 수가 정수일 경우
+                        num_clusters += cluster_count
+                    '''
             
             # 검색 결과를 템플릿에 전달하여 렌더링
             context = {
                 'gene_name': gene_name,
                 'num_samples': num_samples,
-                'num_clusters': num_clusters
+                'gene_existing_study_list': gene_existing_study_list
+                #'num_clusters': num_clusters
             }
             return render(request, 'genesearch_result.html', context)
     else:

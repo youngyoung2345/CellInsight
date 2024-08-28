@@ -328,3 +328,49 @@ def read_singlecellportal_from_s3(bucket_name, prefix):
     file_list.extend(process_cluster(bucket_name, prefix + 'cluster/'))
     
     return file_list
+
+import tempfile
+
+# 각 study 폴더 안에 있는 .h5ad 파일들을 리스트로 가져오는 함수
+def get_h5ad_files_from_study(study_path):
+    """
+    특정 study 경로 안에 있는 모든 .h5ad 파일을 리스트로 가져옵니다.
+    
+    Parameters:
+    - study_path: S3 버킷에서 study 폴더의 경로
+    
+    Returns:
+    - h5ad_file_list: study 폴더 안의 모든 .h5ad 파일 경로 리스트
+    """
+    # study 폴더 안의 .h5ad 파일 리스트 초기화
+    h5ad_file_list = []
+    
+    # S3 버킷의 해당 study 경로에서 파일들을 가져옴
+    response_files = list_s3_objects('cellinsight-bucket', study_path, delimiter=True)
+    
+    print('response_files:', response_files)
+    
+    if response_files and 'Contents' in response_files:
+        for obj in response_files['Contents']:
+            file_key = obj['Key']
+            print('file_key :', file_key)
+            if file_key.endswith('.h5ad'):  # .h5ad 파일만 추가
+                try:
+                    # 임시 파일 생성
+                    temp_file = tempfile.NamedTemporaryFile(suffix='.h5ad', delete=False)
+                
+                    # S3에서 파일 다운로드
+                    download_s3_objects('cellinsight-bucket', file_key, temp_file.name)
+                
+                    # 다운로드한 로컬 파일 경로를 리스트에 추가
+                    h5ad_file_list.append(temp_file.name)
+                
+                except (OSError, IOError) as e:
+                    # 오류 발생 시 로그를 남기고 해당 파일 건너뛰기
+                    print(f"Error downloading or reading {file_key}: {e}")
+                    # 임시 파일 삭제
+                    temp_file.close()
+                    os.remove(temp_file.name)
+                    continue
+    
+    return h5ad_file_list
