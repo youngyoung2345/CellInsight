@@ -80,56 +80,110 @@ def read_h5ad(file_data):
         return data
     
 def read_scp_cluster(file_data):
+    try:
+        # 만약 file_data가 bytes 객체라면, 이를 파일 객체로 변환
+        if isinstance(file_data, bytes):
+            file_data = io.BytesIO(file_data)
     
-    # 파일의 첫 1024 바이트를 읽어서 파일 형식을 판별합니다.
-    file_snippet = file_data.read(1024).decode('utf-8')
-    file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
+        # 파일의 첫 1024 바이트를 읽어서 파일 형식을 판별합니다.
+        file_snippet = file_data.read(1024)  # 첫 1024 바이트 읽기 (바이트 타입)
+        file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
+    
+        # 파일 형식 판별 및 처리
+        if file_snippet.startswith(b'\x1f\x8b'):  # gzip 파일
+            # gzip 파일 처리
+            try:
+                with gzip.open(file_data, 'rt', encoding='utf-8') as gz_file:
+                    df = pd.read_csv(gz_file)
+            except Exception as e:
+                print(f"Error reading gzip file: {e}")
+                return None
+        
+        elif file_snippet[:4] == b'\x89HDF':  # HDF5 파일 (일부 형식 예: H5 or H5AD)
+            print("Cluster files cannot be HDF5 format.")
+            return None  # Return None for unsupported HDF5 format
+        
+        else:
+            # 텍스트 파일 처리
+            file_snippet = file_snippet.decode('utf-8')  # 바이트를 문자열로 변환
+        
+            # 파일 확장자에 따라 적절한 구분자 설정
+            if ',' in file_snippet:
+                sep = ',' 
+            else:
+                sep = '\t'  # 기본적으로는 탭으로 구분된 파일로 가정
 
-    # 파일 확장자에 따라 적절한 구분자 설정
-    if '.csv' in file_snippet or ',' in file_snippet:
-        sep = ',' 
-    else:
-        sep = '\t'  # 기본적으로는 탭으로 구분된 파일로 가정
+            try:
+                # 파일을 데이터프레임으로 읽어옵니다.
+                df = pd.read_csv(file_data, sep=sep)
+            except Exception as e:
+                print(f"Error reading CSV/TSV file: {e}")
+                return None  # Return None if an error occurs
 
-    # 파일을 데이터프레임으로 읽어옵니다.
-    df = pd.read_csv(file_data, sep=sep)
-    return df   
+        return df
+    
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
 
 def read_scp_exp(file_data):
-
-    file_snippet = file_data.read(4)
-    file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
     
-    # h5 또는 h5ad 파일인 경우 처리
-    # h5 또는 h5ad 파일인 경우 처리 (HDF5 파일은 0x89로 시작)
-    # h5 또는 h5ad 파일인 경우 처리
-    if file_snippet == b'\x89HDF':
+    try:
+        # 만약 file_data가 bytes 객체라면, 이를 파일 객체로 변환
+        if isinstance(file_data, bytes):
+            file_data = io.BytesIO(file_data)
+
+        # 파일의 첫 4바이트를 읽어 파일 형식을 판별합니다.
+        file_snippet = file_data.read(4)
+        file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
+
+        # h5 또는 h5ad 파일인 경우 처리 (HDF5 파일은 0x89HDF로 시작)
+        if file_snippet == b'\x89HDF':
+            try:
+                with h5py.File(file_data, 'r') as f:
+                    # H5 파일이 h5ad 또는 10X Genomics 형식인지 확인합니다.
+                    if 'matrix' in f.keys() or 'X' in f.keys():
+                        return sc.read_10x_h5(file_data)
+                    else:
+                        return sc.read_h5ad(file_data)
+            except Exception as e:
+                print(f"Error reading h5/h5ad file: {e}")
+                return None 
+
+        # 텍스트 파일을 처리할 경우 (csv/tsv)
+        # 파일의 첫 1024 바이트를 다시 읽고 문자열로 변환하여 구분자를 판별합니다.
+        file_snippet = file_data.read(1024).decode('utf-8')
+        file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
+
+        # 파일 확장자에 따라 적절한 구분자 설정
+        if '\t' in file_snippet:  # tsv
+            sep = '\t'
+        elif ',' in file_snippet:  # csv
+            sep = ',' 
+        else:
+            sep = '\t'  # 기본적으로는 탭으로 구분된 파일로 가정
+
+        # 텍스트 파일을 읽기 위해 파일 데이터를 문자열로 디코딩하여 StringIO로 변환
+        file_data_str = io.StringIO(file_data.read().decode('utf-8'))
+        file_data.seek(0)  # 파일 포인터를 처음으로 되돌립니다.
+
         try:
-            with h5py.File(file_data, 'r') as f:
-                # H5 파일이 h5ad 또는 10X Genomics 형식인지 확인합니다.
-                if 'matrix' in f.keys() or 'X' in f.keys():
-                    return sc.read_10x_h5(file_data)
-                else:
-                    return sc.read_h5ad(file_data)
+            # 파일을 anndata로 읽어옵니다.
+            adata = sc.read_csv(file_data_str, delimiter=sep)
+            return adata
         except Exception as e:
-            print(f"Error reading h5/h5ad file: {e}")
-            raise
-
-    # 파일 확장자에 따라 적절한 구분자 설정
-    if '.tsv' in file_snippet or '\t' in file_snippet:
-        sep = '\t'
-    elif '.csv' in file_snippet or ',' in file_snippet:
-        sep = ',' 
-    else:
-        sep = '\t'  # 기본적으로는 탭으로 구분된 파일로 가정
-
-    # 파일을 anndata로 읽어옵니다.
-    adata = sc.read_csv(file_data, delimiter=sep)
-    return adata
+            print(f"Error reading CSV/TSV file: {e}")
+            return None
+    
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
 
 def read_scp_exp_gz(file_data):
     with gzip.GzipFile(fileobj=io.BytesIO(file_data)) as gz:
-        return read_scp_exp(gz)
+        # gzip으로 압축된 파일을 읽고, 읽은 데이터를 그대로 read_scp_exp 함수로 전달
+        decompressed_data = gz.read()
+        return read_scp_exp(decompressed_data)
     
 def read_10x_mtx(folder_path):
     # 폴더 안의 모든 파일을 탐색
@@ -201,7 +255,8 @@ def read_PanglaoDB_from_s3(bucket_name, prefix):
 def process_exp(bucket_name, folder_prefix):
     response = list_s3_objects(bucket_name, folder_prefix)
         
-    if response is None:
+    if response is None or 'Contents' not in response:
+        # S3 객체가 없거나, 응답에 Contents가 없으면 빈 리스트 반환
         return []
         
     file_list = []
@@ -238,7 +293,8 @@ def process_exp(bucket_name, folder_prefix):
 def process_cluster(bucket_name, folder_prefix):
     response = list_s3_objects(bucket_name, folder_prefix)
         
-    if response is None:
+    if response is None or 'Contents' not in response:
+        # S3 객체가 없거나, 응답에 Contents가 없으면 빈 리스트 반환
         return []
         
     file_list = []
@@ -268,7 +324,7 @@ def process_cluster(bucket_name, folder_prefix):
 def read_singlecellportal_from_s3(bucket_name, prefix):
     # Initialize file_list once and append results from both folders
     file_list = []
-    file_list.extend(process_exp(bucket_name, prefix + '/expression', 'expression'))
-    file_list.extend(process_cluster(bucket_name, prefix + '/cluster', 'cluster'))
+    file_list.extend(process_exp(bucket_name, prefix + 'expression/'))
+    file_list.extend(process_cluster(bucket_name, prefix + 'cluster/'))
     
     return file_list

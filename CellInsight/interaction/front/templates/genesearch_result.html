@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block left_section %}
+    <a href="{% url 'welcome' %}">Back to Welcome Page</a>
+{% endblock %}
+
+{% block right_section %}
+<h1>Results for "{{ gene_name }}"</h1>
+<p>The gene "{{ gene_name }}" is present in {{ num_samples }} samples.</p>
+<p>Number of clusters with this gene: {{ num_clusters }}</p>
+
+<a href="{% url 'genesearch' %}">Search another gene</a>
+{% endblock %}

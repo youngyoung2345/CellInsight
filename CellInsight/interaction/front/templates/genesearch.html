@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block left_section %}
+    <a href="{% url 'welcome' %}">Back to Welcome Page</a>
+{% endblock %}
+
+{% block right_section %}
+<h1>Search for a Gene</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Search</button>
+</form>
+{% endblock %}

@@ -1,11 +1,27 @@
-{% extends 'base.html' %}
-
-{% block left_section %}
-    <p>Preprocessing</p>
-    <a href="{% url 'preprocessing' %}">Go to Preprocessing</a>
-{% endblock %}
-
-{% block right_section %}
-    <p>Search</p>
-    <a href="{% url 'search' %}">Go to Search</a>
-{% endblock %}
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to CellInsight</title>
+    <link rel="stylesheet" href="{% static 'css/welcome_style2.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Welcome to CellInsight</h1>
+        <nav>
+            <!-- 웰컴 페이지로 돌아가는 링크 추가 -->
+            <a href="{% url 'welcome' %}" class="back-link">Back to Welcome Page</a>
+        </nav>
+    </header>
+    <div class="welcome-container">
+        <div class="welcome-section">
+            <p>Preprocessing</p>
+            <a href="{% url 'preprocessing' %}">Go to Preprocessing</a>
+        </div>
+        <div class="welcome-section">
+            <p>Search</p>
+            <a href="{% url 'search' %}">Go to Search</a>
+        </div>
+    </div>
+</body>
+</html>

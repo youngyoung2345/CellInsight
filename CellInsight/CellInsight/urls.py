@@ -31,6 +31,8 @@ urlpatterns = [
     path('mapcell_process/', views.mapcell_process, name='mapcell_process'),
     path('umap/', views.umap_view, name='umap_view'),
     path('markersearch/', views.markersearch, name='markersearch'), 
+    path('genesearch/', views.genesearch, name='genesearch'),
+
    path('search/', views.only_render, {'html': 'search.html'}, name='search'),
 ]
 
