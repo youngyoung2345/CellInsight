@@ -22,16 +22,8 @@ from migrations import models
 from rpy2.robjects import pandas2ri, conversion, default_converter
 pandas2ri.activate()
 
-# 현재 스크립트의 디렉토리 경로 가져오기
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
-# 절대 경로를 이용해 R 스크립트 경로 설정
 r_script_path = os.path.join(script_dir, 'PanglaoDB_proc_R.R')
-print(f"R script path: {r_script_path}")
-
-# R 스크립트 로드
-ro.r.source(r_script_path)
-process_panglaodb = ro.r['process_panglaodb']
 
 def import_additional_data(data_path):
     '''
@@ -75,6 +67,10 @@ def import_additional_data(data_path):
     else:
         SRA = data_name
         return csv[csv['SRA'] == SRA]
+
+def get_first_value(series):
+        return series.values[0] if not pd.isna(series).all() else pd.NA 
+
 def process_PanglaoDB(data_path, additional_data):
     '''
     data_path : EX) cellinsight-bucket/PanglaoDB/SRA203368/PanglaoDB/SRA203368_SRS866906.sparse.RData
@@ -92,36 +88,33 @@ def process_PanglaoDB(data_path, additional_data):
 
         object = process_panglaodb(data_path)
 
-    if 'dgCMatrix' in object.rclass:
-        # dgCMatrix 데이터 처리
-        i = np.array(object.rx2('i'))
-        p = np.array(object.rx2('p'))
-        x = np.array(object.rx2('x'))
-        dims = np.array(object.rx2('Dim'))
-        dimnames = object.rx2('Dimnames')
-        rownames = [str(name) for name in dimnames[0]]
-        colnames = [str(name) for name in dimnames[1]]
+        if 'dgCMatrix' in object.rclass:
+            # dgCMatrix 데이터 처리
+            i = np.array(object.rx2('i'))
+            p = np.array(object.rx2('p'))
+            x = np.array(object.rx2('x'))
+            dims = np.array(object.rx2('Dim'))
+            dimnames = object.rx2('Dimnames')
+            rownames = [str(name) for name in dimnames[0]]
+            colnames = [str(name) for name in dimnames[1]]
 
-        # 희소 행렬 복원
-        sparse_matrix = sp.csc_matrix((x, i, p), shape=(dims[0], dims[1]))
+            # 희소 행렬 복원
+            sparse_matrix = sp.csc_matrix((x, i, p), shape=(dims[0], dims[1]))
 
-        # AnnData 객체 생성
-        processed_data = anndata.AnnData(X=sparse_matrix)
-        processed_data.obs_names = rownames
-        processed_data.var_names = colnames
-    else:
+            # AnnData 객체 생성
+            processed_data = anndata.AnnData(X=sparse_matrix)
+            processed_data.obs_names = rownames
+            processed_data.var_names = colnames
+        else:
     
-        counts_matrix = np.array(object.rx2('counts_matrix'))
-        col_data_df = pandas2ri.rpy2py(object.rx2('col_data_df'))
-        row_data_df = pandas2ri.rpy2py(object.rx2('row_data_df'))
+            counts_matrix = np.array(object.rx2('counts_matrix'))
+            col_data_df = pandas2ri.rpy2py(object.rx2('col_data_df'))
+            row_data_df = pandas2ri.rpy2py(object.rx2('row_data_df'))
         
-        # processed_data definition
-        processed_data = anndata.AnnData(X=counts_matrix)
-        processed_data.obs['cell_ids'] = col_data_df
-        processed_data.var['gene_ids'] = row_data_df
-    
-    def get_first_value(series):
-        return series.values[0] if not pd.isna(series).all() else pd.NA
+            # processed_data definition
+            processed_data = anndata.AnnData(X=counts_matrix)
+            processed_data.obs['cell_ids'] = col_data_df
+            processed_data.var['gene_ids'] = row_data_df
     
     # 데이터를 처리하여 uns에 추가
     processed_data.uns['species__ontology_label'] = get_first_value(additional_data['Species'])

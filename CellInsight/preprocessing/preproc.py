@@ -1,4 +1,3 @@
-import os
 import matplotlib
 import scanpy as sc
 import scrublet as scr
@@ -13,6 +12,14 @@ def load_data(file_path, file_format):
     match file_format:
         case 'RData':
             preprocessed_data = pdl.make_anndata(file_path)
+        case 'h5ad':
+            preprocessed_data = sc.read_h5ad(file_path)
+        case 'h5':
+            preprocessed_data = sc.read_10x_h5(file_path)
+        case 'csv':
+            preprocessed_data = sc.read_csv(file_path)
+        case 'text':
+            preprocessed_data = sc.read_text(file_path)
         case _:
             preprocessed_data = scp.process_Single_Cell_Portal(file_path, file_format)
 
