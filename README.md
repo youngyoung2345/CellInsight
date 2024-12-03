@@ -72,4 +72,5 @@ https://carpal-money-c50.notion.site/CellInsight-81bee13926e84ff392a0f4deeac23bc
 
 | 류여진 | 이하영 |
 | :-: | :-: |
-| <img src='https://github.com/youngyoung2345' height=130 width=130></img> | <img src='https://github.com/ryj8075' height=130 width=130></img> | <img 
+| <img src='https://avatars.githubusercontent.com/u/88676496?v=4' height=130 width=130></img> | <img src='https://avatars.githubusercontent.com/u/134286859?v=4' height=130 width=130></img> |
+| <a href="https://github.com/ryj8075" target="_blank"><img src="https://img.shields.io/badge/GitHub-black.svg?&style=round&logo=github"/></a> | <a href="https://github.com/youngyoung2345" target="_blank"><img src="https://img.shields.io/badge/GitHub-black.svg?&style=round&logo=github"/></a> |
